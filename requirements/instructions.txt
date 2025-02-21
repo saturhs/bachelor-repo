@@ -1,0 +1,43 @@
+# Project overview
+Use this guide to build a web app where users, basically zootechnicians can manage the breeding cycle of dairy cows using simple UI/UX to create/delete/edit records in a database, update informations about each cow and as a result see which animals needs an examination or control.
+
+# Feature requirements
+- We will use Next.js, shadcn and MongoDB database.
+- App will be PWA so we will use next-pwa library. 
+- UI should allow to swap between pages from main menu, be responsive and present data from MongoDB database.
+- Database should support CRUD operations. It's records will contain various data types, that can be used to filter the data displayed to the user.
+- We will provide an option to analize database object's attributes like date of last examination, so app can remind the user of an up coming appointment. A list or other type of data should contain objects that has date, cow_id and description attribute. Then this list will be mapped into a calendar dates.
+- CRUD should work offline as well, so can be easily synchronized later after reconnection to internet.
+- A button that synchronizes all data stored locally on a device with data in main database.
+- Analized data will be displayed on a calendar subpage, as a reminder of important appointments.
+- The user can delete all stored data in database by confirming and clicking reset button.
+
+# App workflow
+- After opening the app we on Main Screen with buttons that redirects to specific pages
+- First button "Animals" redirects to animals.tsx that is basically displaying database tables, accordingly to set up filters. Showing each cow as a Card component. Main screen is a tab selector like in example google chrome browser, three tabs: females, males, babies.
+- Second button "Calendar" redirects to calendar.tsx that shows basic calendar but on each date should display every planned task for the user. App's logic is preparing a list of tasks for every day. The user can change displayed months.
+- Each page has button on the left up corner to go back to main menu.
+
+# Project structure
+
+# Rules
+- All new components should go in /components and be named example-component.tsx unless otherwise specified  
+- All new pages should go in /app
+
+
+
+Jestem w trakcie tworzenia aplikacji webowej opartej na Next.js, która ma działać jako Progressive Web App (PWA) z funkcjonalnością offline oraz synchronizacją danych. Używam następującego tech stacka:
+
+    Frontend: Next.js z integracją next-pwa, shadcn.
+    Backend: Wbudowane API Routes w Next.js do obsługi operacji CRUD
+    Baza danych: MongoDB
+
+Chciałbym, abyś pokierował mnie przy tworzeniu odpowiedniej struktury katalogowej projektu. Proszę o szczegółowy opis i przykład struktury katalogów wraz z krótkim opisem roli poszczególnych folderów i plików, m.in.:
+
+    Główna struktura katalogu Next.js.
+    Foldery dla komponentów, stron, API routes.
+    Konfigurację PWA (manifest, service worker).
+    Konfigurację połączenia z bazą MongoDB.
+    Dodatkowe foldery przydatne podczas pracy nad projektem.
+
+Proszę o wygenerowanie przykładowej struktury katalogów z krótkimi opisami, jak i gdzie umieścić poszczególne pliki.
