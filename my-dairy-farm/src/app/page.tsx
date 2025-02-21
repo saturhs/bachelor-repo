@@ -4,7 +4,7 @@ import { StatsContainer } from "@/components/ui/StatsContainer";
 
 
 export default function Home() {
-  console.log("Home component is rendering");
+  console.log("Home component is rendering and GitHub also works ehe jebać żydów.");
   return (
     <main className="min-h-screen bg-[#faf9f6] relative flex flex-col justify-between">
       <Navbar />
