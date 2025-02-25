@@ -1,29 +1,34 @@
 # Project structure
 bachelor-degree/
 ├── my-dairy-farm/              # Main project directory
-│   ├── public/
-│   │   ├── icons/             # PWA icons
-│   │   └── manifest.json      # PWA manifest
+│   ├── public/                  # Static assets
+│   │   ├── icons/              # PWA icons
+│   │   ├── file.svg            # Generic SVG file
+│   │   ├── globe.svg           # Globe icon SVG
+│   │   ├── next.svg            # Next.js logo SVG
+│   │   ├── vercel.svg          # Vercel logo SVG
+│   │   └── window.svg          # Window icon SVG
+│   │   └── manifest.json       # PWA manifest
 │   │
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.tsx     # Root layout
-│   │   │   ├── page.tsx       # Home/Landing page
-│   │   │   ├── about/         # About section
+│   ├── src/                    # Source code
+│   │   ├── app/                # Application pages
+│   │   │   ├── layout.tsx      # Root layout
+│   │   │   ├── page.tsx        # Home/Landing page
+│   │   │   ├── about/          # About section
 │   │   │   │   └── page.tsx
-│   │   │   ├── statistics/    # Statistics section
+│   │   │   ├── statistics/     # Statistics section
 │   │   │   │   └── page.tsx
-│   │   │   └── main-menu/     # Main menu section
-│   │   │       ├── page.tsx   # Main menu page
-│   │   │       ├── animals/   # Animals section
+│   │   │   └── main-menu/      # Main menu section
+│   │   │       ├── page.tsx    # Main menu page
+│   │   │       ├── animals/    # Animals section
 │   │   │       │   └── page.tsx
-│   │   │       ├── calendar/  # Calendar section
+│   │   │       ├── calendar/   # Calendar section
 │   │   │       │   └── page.tsx
-│   │   │       └── settings/  # Settings section
+│   │   │       └── settings/   # Settings section
 │   │   │           └── page.tsx
 │   │   │
-│   │   ├── components/
-│   │   │   └── ui/           # Reusable UI components
+│   │   ├── components/         # Reusable UI components
+│   │   │   └── ui/
 │   │   │       ├── AnimalCard.tsx
 │   │   │       ├── button.tsx
 │   │   │       ├── calendar.tsx
@@ -31,29 +36,29 @@ bachelor-degree/
 │   │   │       ├── Goback.tsx
 │   │   │       └── Navbar.tsx
 │   │   │
-│   │   ├── lib/
-│   │   │   ├── db/           # Database utilities
+│   │   ├── lib/                # Library utilities
+│   │   │   ├── db/             # Database utilities
 │   │   │   │   ├── mongodb.ts
 │   │   │   │   └── models/
 │   │   │   │       ├── Animal.ts
 │   │   │   │       └── Event.ts
 │   │   │   │
-│   │   │   └── utils/        # Helper functions
+│   │   │   └── utils/          # Helper functions
 │   │   │       ├── dates.ts
 │   │   │       └── offline-sync.ts
 │   │   │
-│   │   └── types/           # TypeScript type definitions
+│   │   └── types/              # TypeScript type definitions
 │   │       ├── animal.ts
 │   │       └── event.ts
 │   │
-│   ├── .env                 # Environment variables
-│   ├── next.config.js       # Next.js configuration
-│   ├── package.json
-│   └── tsconfig.json
+│   ├── .env                    # Environment variables
+│   ├── next.config.js          # Next.js configuration
+│   ├── package.json            # Project dependencies
+│   └── tsconfig.json           # TypeScript configuration
 │
-├── requirements/            # Project requirements and documentation
+├── requirements/               # Project requirements and documentation
 │   ├── project-overview.md
 │   ├── project-state.md
-│   ├── project-structure.md  # New file
+│   ├── project-structure.md     # Updated file
 │   ├── mainp-prompt.md
 │   └── instructions.txt

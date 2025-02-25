@@ -12,7 +12,7 @@ export default function MainMenu() {
         <h1 className="text-5xl font-bold mb-8">Main Menu</h1>
         
         <div className="flex flex-col gap-4 w-[80%] max-w-sm mx-auto">
-          <Link href="/main-menu/animals">
+          <Link href="/animals">
             <Button 
               className="w-full h-12 px-8 text-lg bg-[#ff4f4f] hover:bg-[#ff4f4f]/90 text-white"
             >
@@ -20,7 +20,7 @@ export default function MainMenu() {
             </Button>
           </Link>
 
-          <Link href="/main-menu/calendar">
+          <Link href="/calendar">
             <Button 
               className="w-full h-12 px-8 text-lg bg-[#ff4f4f] hover:bg-[#ff4f4f]/90 text-white"
             >
@@ -28,7 +28,7 @@ export default function MainMenu() {
             </Button>
           </Link>
 
-          <Link href="/main-menu/settings">
+          <Link href="/settings">
             <Button 
               className="w-full h-12 px-8 text-lg bg-[#ff4f4f] hover:bg-[#ff4f4f]/90 text-white"
             >
