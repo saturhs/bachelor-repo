@@ -1,13 +1,13 @@
 # Project structure
 bachelor-degree/
 ├── my-dairy-farm/              # Main project directory
-│   ├── public/                  # Static assets
+│   ├── public/                 # Static assets
 │   │   ├── icons/              # PWA icons
 │   │   ├── file.svg            # Generic SVG file
 │   │   ├── globe.svg           # Globe icon SVG
 │   │   ├── next.svg            # Next.js logo SVG
 │   │   ├── vercel.svg          # Vercel logo SVG
-│   │   └── window.svg          # Window icon SVG
+│   │   ├── window.svg          # Window icon SVG
 │   │   └── manifest.json       # PWA manifest
 │   │
 │   ├── src/                    # Source code
@@ -59,6 +59,5 @@ bachelor-degree/
 ├── requirements/               # Project requirements and documentation
 │   ├── project-overview.md
 │   ├── project-state.md
-│   ├── project-structure.md     # Updated file
+│   ├── project-structure.md    # Updated file
 │   ├── mainp-prompt.md
-│   └── instructions.txt
