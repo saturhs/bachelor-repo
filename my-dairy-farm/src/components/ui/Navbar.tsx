@@ -10,7 +10,9 @@ export function Navbar() {
   const router = useRouter();
 
   const handleLogoClick = () => {
-    router.back();
+    if (window.location.pathname !== '/') { // Check if the current path is not the root
+      router.back();
+    }
   };
 
   return (
