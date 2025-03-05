@@ -14,14 +14,16 @@ export function GoBack() {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={handleGoBack}
-      className="ml-4 mt-20 hover:bg-gray-100" // Removed absolute positioning, added margin-top and margin-left
-      aria-label="Go back"
-    >
-      <ArrowLeft className="h-6 w-6" />
-    </Button>
+    <div className="h-10 mt-2"> {/* Fixed height container with small top margin */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleGoBack}
+        className="ml-4 hover:bg-gray-100"
+        aria-label="Go back"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+    </div>
   );
 }

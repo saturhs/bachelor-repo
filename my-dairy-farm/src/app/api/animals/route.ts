@@ -14,7 +14,7 @@ function transformAnimal(animal: any) {
     birthDate: animal.birthDate,
     lastExamination: animal.lastExamination,
     status: animal.status,
-    object_id: animal.object_id || '',
+    location: animal.location || '',  // Changed field name from object_id to location
     createdAt: animal.createdAt,
     updatedAt: animal.updatedAt
   };
@@ -57,13 +57,16 @@ export async function POST(request: Request) {
   try {
     await connectToDatabase();
     
-    // Use a simpler approach for getting the body
-    const body = await request.json();
+    // Log the raw request for debugging
+    const text = await request.text();
+    console.log("Raw request body:", text);
     
-    console.log("Request body received:", body);
-    console.log("object_id value:", body.object_id);
+    // Parse the JSON
+    const body = JSON.parse(text);
+    console.log("Parsed body:", body);
+    console.log("Location field:", body.location);
     
-    // Create a new animal with our model directly
+    // Create a new animal document with explicit field assignment
     const newAnimal = new Animal({
       name: body.name,
       tag: body.tag,
@@ -71,28 +74,31 @@ export async function POST(request: Request) {
       category: body.category,
       birthDate: body.birthDate,
       status: body.status || 'healthy',
-      object_id: body.object_id || '',
+      location: body.location || '', // Explicitly assign location
       lastExamination: body.lastExamination || null
     });
     
-    console.log("Animal instance before save:", {
-      ...newAnimal.toObject(),
-      object_id: newAnimal.get('object_id')
+    console.log("Animal object before save:", newAnimal);
+    
+    // Pre-save hook to ensure location is set
+    newAnimal.schema.pre('save', function() {
+      if (this.isNew && body.location) {
+        this.location = body.location;
+      }
     });
     
-    // Save the animal
+    // Save the document
     await newAnimal.save();
     
-    console.log("Saved animal:", {
-      ...newAnimal.toObject(),
-      object_id: newAnimal.get('object_id')
-    });
+    // Log what was saved
+    console.log("Saved animal:", newAnimal);
+    console.log("Location after save:", newAnimal.location);
     
-    // Return the transformed animal
-    const transformedAnimal = transformAnimal(newAnimal);
-    console.log("Transformed animal:", transformedAnimal);
+    // Use our transform function
+    const transformed = transformAnimal(newAnimal);
+    console.log("Transformed for response:", transformed);
     
-    return NextResponse.json(transformedAnimal, { status: 201 });
+    return NextResponse.json(transformed, { status: 201 });
   } catch (error) {
     console.error('Error creating animal:', error);
     return NextResponse.json({ error: 'Failed to create animal' }, { status: 500 });

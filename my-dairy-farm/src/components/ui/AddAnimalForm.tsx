@@ -21,7 +21,7 @@ export function AddAnimalForm() {
     category: "adult",
     birthDate: "",
     status: "healthy",
-    object_id: ""
+    location: ""  // Changed field name from object_id to location
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,43 +34,22 @@ export function AddAnimalForm() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-    
-    // Create a payload for logging purposes
-    const locationValue = formData.object_id;
-    console.log("Location value before submission:", locationValue);
-    
-    // Create explicit payload with careful handling of object_id
-    const payload = {
-      name: formData.name.trim(),
-      tag: formData.tag.trim(),
-      gender: formData.gender,
-      category: formData.category,
-      birthDate: formData.birthDate,
-      status: formData.status,
-      // Ensure object_id is explicitly set and trimmed
-      object_id: locationValue ? locationValue.trim() : ""
-    };
-    
-    console.log("Final payload:", payload);
+    e.preventDefault()
+    setIsSubmitting(true)
+    setError(null)
 
     try {
-      // Send the request
       const response = await fetch("/api/animals", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
-      });
-
-      const responseData = await response.json();
-      console.log("Response data:", JSON.stringify(responseData, null, 2));
+        body: JSON.stringify(formData),
+      })
 
       if (!response.ok) {
-        throw new Error(JSON.stringify(responseData));
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add animal');
       }
 
       // Reset form and close dialog
@@ -81,19 +60,19 @@ export function AddAnimalForm() {
         category: "adult",
         birthDate: "",
         status: "healthy",
-        object_id: ""
-      });
-      setIsOpen(false);
+        location: ""
+      })
+      setIsOpen(false)
       
-      // Force reload the page to get fresh data
-      window.location.reload();
-    } catch (error) {
-      console.error("Error adding animal:", error);
-      setError("Failed to add animal. Please try again.");
+      // Refresh the page
+      window.location.reload()
+    } catch (error: any) {
+      console.error("Error adding animal:", error)
+      setError(error.message || 'Failed to add animal. Please try again.')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -197,11 +176,11 @@ export function AddAnimalForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="object_id">Building/Location</Label>
+            <Label htmlFor="location">Building/Location</Label>
             <Input
-              id="object_id"
-              name="object_id"
-              value={formData.object_id}
+              id="location"
+              name="location"
+              value={formData.location}
               onChange={handleChange}
               placeholder="e.g., Barn 1, Stall 5, etc."
             />

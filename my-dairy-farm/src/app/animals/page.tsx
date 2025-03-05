@@ -4,6 +4,7 @@ import { Navbar } from "@/components/ui/Navbar";
 import { GoBack } from "@/components/ui/Goback";
 import { AnimalCard } from "@/components/ui/AnimalCard";
 import { AddAnimalForm } from "@/components/ui/AddAnimalForm";
+import { LocationFilter } from "@/components/ui/LocationFilter";
 import { Animal } from "@/types/animal";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +13,7 @@ export default function AnimalsPage() {
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAnimals = async () => {
@@ -34,19 +36,35 @@ export default function AnimalsPage() {
     fetchAnimals();
   }, []);
 
-  // Filter functions for each category
-  const females = animals.filter(animal => animal.gender === 'female' && animal.category === 'adult');
-  const males = animals.filter(animal => animal.gender === 'male' && animal.category === 'adult');
-  const calves = animals.filter(animal => animal.category === 'baby');
+  // Filter animals by location first if a location is selected
+  const filteredByLocation = selectedLocation
+    ? animals.filter(animal => animal.location === selectedLocation)
+    : animals;
+  
+  // Then filter by category and gender
+  const females = filteredByLocation.filter(animal => animal.gender === 'female' && animal.category === 'adult');
+  const males = filteredByLocation.filter(animal => animal.gender === 'male' && animal.category === 'adult');
+  const calves = filteredByLocation.filter(animal => animal.category === 'baby');
 
   return (
     <main className="min-h-screen bg-[#faf9f6] relative">
       <Navbar />
       <GoBack />
-      <div className="flex flex-col items-center justify-start pt-8 pb-16">
+      <div className="flex flex-col items-center justify-start pt-4 pb-16">
         <h1 className="text-5xl font-bold mb-8">Animals</h1>
 
         <div className="w-[95%] md:w-[80%] lg:w-[60%] max-w-4xl mx-auto mb-6">
+          {/* Add the location filter */}
+          {!loading && !error && (
+            <div className="mb-4">
+              <LocationFilter 
+                animals={animals} 
+                onChange={setSelectedLocation} 
+                selectedLocation={selectedLocation} 
+              />
+            </div>
+          )}
+          
           <Tabs defaultValue="females" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="females">Females</TabsTrigger>
@@ -78,7 +96,9 @@ export default function AnimalsPage() {
                       ))
                     ) : (
                       <p className="text-center col-span-2 py-8 text-gray-600">
-                        No females found. Add your first female cow by clicking the button below.
+                        {selectedLocation ? 
+                          `No females found in ${selectedLocation}.` : 
+                          'No females found. Add your first female cow by clicking the button below.'}
                       </p>
                     )}
                   </div>
@@ -92,7 +112,9 @@ export default function AnimalsPage() {
                       ))
                     ) : (
                       <p className="text-center col-span-2 py-8 text-gray-600">
-                        No males found. Add your first male cow by clicking the button below.
+                        {selectedLocation ? 
+                          `No males found in ${selectedLocation}.` : 
+                          'No males found. Add your first male cow by clicking the button below.'}
                       </p>
                     )}
                   </div>
@@ -106,7 +128,9 @@ export default function AnimalsPage() {
                       ))
                     ) : (
                       <p className="text-center col-span-2 py-8 text-gray-600">
-                        No calves found. Add your first calf by clicking the button below.
+                        {selectedLocation ? 
+                          `No calves found in ${selectedLocation}.` : 
+                          'No calves found. Add your first calf by clicking the button below.'}
                       </p>
                     )}
                   </div>

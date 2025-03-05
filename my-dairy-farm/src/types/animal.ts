@@ -7,7 +7,7 @@ export interface Animal {
     birthDate: Date;
     lastExamination?: Date;
     status: string;
-    object_id?: string;
+    location?: string;  // Changed field name from object_id to location
     createdAt: Date;
     updatedAt: Date;
 }

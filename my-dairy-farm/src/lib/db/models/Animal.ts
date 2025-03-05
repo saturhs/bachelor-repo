@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
 
+// First, clear any previous model to avoid the "model already exists" warning
+if (mongoose.models.Animal) {
+  delete mongoose.models.Animal;
+}
+
 const AnimalSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -33,13 +38,21 @@ const AnimalSchema = new mongoose.Schema({
     required: true,
     default: 'healthy',
   },
-  object_id: {
+  location: {
     type: String,
-    required: false,
     default: '',
   },
 }, {
   timestamps: true,
 });
 
-export const Animal = mongoose.models.Animal || mongoose.model('Animal', AnimalSchema);
+// Add pre-save hook to ensure location is preserved
+AnimalSchema.pre('save', function(next) {
+  // Ensure location is set properly
+  if (this.isModified('location')) {
+    console.log("Setting location during save:", this.location);
+  }
+  next();
+});
+
+export const Animal = mongoose.model('Animal', AnimalSchema);
