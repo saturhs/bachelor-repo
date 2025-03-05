@@ -42,4 +42,8 @@ next-env.d.ts
 
 # Database files
 # Comment out or remove this line to include database files
-/c:/Users/saturhs/Desktop/GitHub/bachelor-repo/database/data/
+# Ignore all files in database/data
+/database/data/*
+
+# But keep the directory itself by including an empty .gitkeep file
+!/database/data/.gitkeep
