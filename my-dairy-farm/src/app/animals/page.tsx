@@ -54,14 +54,19 @@ export default function AnimalsPage() {
         <h1 className="text-5xl font-bold mb-8">Animals</h1>
 
         <div className="w-[95%] md:w-[80%] lg:w-[60%] max-w-4xl mx-auto mb-6">
-          {/* Add the location filter */}
+          {/* Updated filter and add button layout */}
           {!loading && !error && (
-            <div className="mb-4">
-              <LocationFilter 
-                animals={animals} 
-                onChange={setSelectedLocation} 
-                selectedLocation={selectedLocation} 
-              />
+            <div className="mb-4 flex flex-col md:flex-row gap-4 items-stretch">
+              <div className="w-full md:flex-1">
+                <LocationFilter 
+                  animals={animals} 
+                  onChange={setSelectedLocation} 
+                  selectedLocation={selectedLocation} 
+                />
+              </div>
+              <div className="w-full md:w-[180px] flex items-stretch"> {/* Fixed width with flex */}
+                <AddAnimalForm />
+              </div>
             </div>
           )}
           
@@ -139,8 +144,6 @@ export default function AnimalsPage() {
             )}
           </Tabs>
         </div>
-
-        <AddAnimalForm />
       </div>
     </main>
   );

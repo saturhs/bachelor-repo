@@ -77,7 +77,7 @@ export function AddAnimalForm() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="h-12 px-8 text-lg bg-[#ff4f4f] hover:bg-[#ff4f4f]/90 text-white">
+        <Button className="h-10 px-4 bg-[#ff4f4f] hover:bg-[#ff4f4f]/90 text-white w-full">
           Add New Animal
         </Button>
       </DialogTrigger>
