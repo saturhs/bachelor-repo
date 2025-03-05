@@ -30,9 +30,6 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
 # vercel
 .vercel
 
@@ -40,4 +37,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-./database/data/
+# Comment out the next line if you want to include .env files in git
+# .env*
+
+# Database files
+# Comment out or remove this line to include database files
+/c:/Users/saturhs/Desktop/GitHub/bachelor-repo/database/data/

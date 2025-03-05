@@ -33,6 +33,11 @@ const AnimalSchema = new mongoose.Schema({
     required: true,
     default: 'healthy',
   },
+  object_id: {
+    type: String,
+    required: false,
+    default: '',
+  },
 }, {
   timestamps: true,
 });

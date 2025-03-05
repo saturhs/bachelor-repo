@@ -7,6 +7,7 @@ export interface Animal {
     birthDate: Date;
     lastExamination?: Date;
     status: string;
+    object_id?: string;
     createdAt: Date;
     updatedAt: Date;
-  }
+}

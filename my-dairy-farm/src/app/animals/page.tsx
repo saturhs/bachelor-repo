@@ -1,47 +1,122 @@
+"use client";
+
 import { Navbar } from "@/components/ui/Navbar";
 import { GoBack } from "@/components/ui/Goback";
 import { AnimalCard } from "@/components/ui/AnimalCard";
-
-// Temporary mock data until we have database
-const mockAnimals = [
-  {
-    id: "1",
-    name: "Bessie",
-    tag: "TAG001",
-    gender: "female",
-    birthDate: new Date("2022-01-01"),
-    status: "healthy"
-  },
-  {
-    id: "2",
-    name: "Daisy",
-    tag: "TAG002",
-    gender: "female",
-    birthDate: new Date("2021-06-15"),
-    status: "examination needed"
-  },
-  {
-    id: "3",
-    name: "Daisy",
-    tag: "TAG002",
-    gender: "female",
-    birthDate: new Date("2021-06-15"),
-    status: "examination needed"
-  }
-];
+import { AddAnimalForm } from "@/components/ui/AddAnimalForm";
+import { Animal } from "@/types/animal";
+import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AnimalsPage() {
+  const [animals, setAnimals] = useState<Animal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnimals = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/animals');
+        if (!res.ok) {
+          throw new Error('Failed to fetch animals');
+        }
+        const data = await res.json();
+        setAnimals(data);
+      } catch (error) {
+        console.error('Error fetching animals:', error);
+        setError('Failed to load animals. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnimals();
+  }, []);
+
+  // Filter functions for each category
+  const females = animals.filter(animal => animal.gender === 'female' && animal.category === 'adult');
+  const males = animals.filter(animal => animal.gender === 'male' && animal.category === 'adult');
+  const calves = animals.filter(animal => animal.category === 'baby');
+
   return (
     <main className="min-h-screen bg-[#faf9f6] relative">
       <Navbar />
       <GoBack />
-      <div className="flex flex-col items-center justify-start pt-8">
+      <div className="flex flex-col items-center justify-start pt-8 pb-16">
         <h1 className="text-5xl font-bold mb-8">Animals</h1>
-        <div className="w-[95%] md:w-[80%] lg:w-[60%] max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mockAnimals.map((animal) => (
-            <AnimalCard key={animal.id} animal={animal} />
-          ))}
+
+        <div className="w-[95%] md:w-[80%] lg:w-[60%] max-w-4xl mx-auto mb-6">
+          <Tabs defaultValue="females" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="females">Females</TabsTrigger>
+              <TabsTrigger value="males">Males</TabsTrigger>
+              <TabsTrigger value="calves">Calves</TabsTrigger>
+            </TabsList>
+
+            {/* Loading State */}
+            {loading && (
+              <div className="w-full text-center py-8">
+                <p className="text-gray-600">Loading animals...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="w-full text-center py-8">
+                <p className="text-red-600">{error}</p>
+              </div>
+            )}
+
+            {!loading && !error && (
+              <>
+                <TabsContent value="females">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    {females.length > 0 ? (
+                      females.map((animal, index) => (
+                        <AnimalCard key={`female-${animal.id}-${index}`} animal={animal} />
+                      ))
+                    ) : (
+                      <p className="text-center col-span-2 py-8 text-gray-600">
+                        No females found. Add your first female cow by clicking the button below.
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="males">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    {males.length > 0 ? (
+                      males.map((animal, index) => (
+                        <AnimalCard key={`male-${animal.id}-${index}`} animal={animal} />
+                      ))
+                    ) : (
+                      <p className="text-center col-span-2 py-8 text-gray-600">
+                        No males found. Add your first male cow by clicking the button below.
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="calves">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    {calves.length > 0 ? (
+                      calves.map((animal, index) => (
+                        <AnimalCard key={`calf-${animal.id}-${index}`} animal={animal} />
+                      ))
+                    ) : (
+                      <p className="text-center col-span-2 py-8 text-gray-600">
+                        No calves found. Add your first calf by clicking the button below.
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
         </div>
+
+        <AddAnimalForm />
       </div>
     </main>
   );

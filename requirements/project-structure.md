@@ -3,35 +3,10 @@
 └─ .
    ├─ copilot-instructions.json
    ├─ database
-   │  └─ data
-   │     ├─ collection-0-6706779809950612491.wt
-   │     ├─ collection-10-6706779809950612491.wt
-   │     ├─ collection-2-6706779809950612491.wt
-   │     ├─ collection-4-6706779809950612491.wt
-   │     ├─ collection-7-6706779809950612491.wt
-   │     ├─ diagnostic.data
-   │     │  ├─ metrics.2025-02-23T14-39-55Z-00000
-   │     │  └─ metrics.2025-02-24T16-21-42Z-00000
-   │     ├─ index-1-6706779809950612491.wt
-   │     ├─ index-11-6706779809950612491.wt
-   │     ├─ index-3-6706779809950612491.wt
-   │     ├─ index-5-6706779809950612491.wt
-   │     ├─ index-6-6706779809950612491.wt
-   │     ├─ index-8-6706779809950612491.wt
-   │     ├─ index-9-6706779809950612491.wt
-   │     ├─ journal
-   │     │  ├─ WiredTigerLog.0000000002
-   │     │  ├─ WiredTigerPreplog.0000000001
-   │     │  └─ WiredTigerPreplog.0000000002
-   │     ├─ mongod.lock
-   │     ├─ sizeStorer.wt
-   │     ├─ storage.bson
-   │     ├─ WiredTiger
-   │     ├─ WiredTiger.lock
-   │     ├─ WiredTiger.turtle
-   │     ├─ WiredTiger.wt
-   │     ├─ WiredTigerHS.wt
-   │     └─ _mdb_catalog.wt
+   │  ├─data
+   │  │  └─ database files
+   │  └─backups
+   │     └─ database backup files
    ├─ my-dairy-farm
    │  ├─ components.json
    │  ├─ eslint.config.mjs
