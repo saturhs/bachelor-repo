@@ -47,3 +47,4 @@ next-env.d.ts
 
 # But keep the directory itself by including an empty .gitkeep file
 !/database/data/.gitkeep
+# not working lol
