@@ -1,13 +1,24 @@
 export interface Animal {
     id: string;
-    name: string;
     tag: string;
     gender: 'female' | 'male';
-    category: 'adult' | 'baby';
     birthDate: Date;
-    lastExamination?: Date;
-    status: string;
-    location?: string;  // Changed field name from object_id to location
+    breed?: string;
+    acquisitionDate?: Date;
+    acquisitionType?: 'born on farm' | 'purchased';
+    mothersTag?: string;
+    fathersTag?: string;
+    currentBCS?: number;
+    currentWeight?: number;
+    lastHealthCheckDate?: Date;
+    lastHeatDay?: Date;
+    lastInseminationDate?: Date;
+    reproductiveStatus: 'not bred' | 'bred' | 'confirmed pregnant' | 'open' | 'dry';
+    lactationStatus: 'lactating' | 'dry' | 'not applicable';
+    notes?: string;
+    location?: string;
+    tags?: string[];
+    category: 'adult' | 'calf';
     createdAt: Date;
     updatedAt: Date;
 }

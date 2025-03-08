@@ -19,6 +19,7 @@ This document outlines the agreed specifications for the Animal model used throu
 | currentWeight | Number | Weight in kg | Optional | `650` |
 | lastHealthCheckDate | Date | Date of last veterinary examination | Optional | `2023-06-10` |
 | lastHeatDay | Date | Date of the animal's last heat period | Optional | `2023-05-28` |
+| lastInseminationDate | Date | Date of the animal's last insemination | Optional | `2023-05-29` |
 | reproductiveStatus | String | Current breeding status | Enum: `not bred`, `bred`, `confirmed pregnant`, `open`, `dry` | `bred` |
 | lactationStatus | String | Current lactation status | Enum: `lactating`, `dry`, `not applicable` | `lactating` |
 | notes | String | Additional information | Optional | `Needs special diet` |

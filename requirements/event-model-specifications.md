@@ -116,17 +116,93 @@ The reminder system operates on several layers:
    - Calendar visual indicators
    - Optional: Email or mobile push notifications
 
-## Implementation Notes
+## Workflow Implementation
 
-1. The Event interface in TypeScript will need to be created
-2. The MongoDB schema will need validation rules added
-3. A recurring job service will be required to:
-   - Check for events requiring notifications
-   - Generate recurring events
-   - Update overdue statuses
-4. The calendar component will need to be implemented with:
-   - Month/week/day views
-   - Color-coded event indicators
-   - Filtering capabilities
-5. API routes will need to be created for CRUD operations
-6. Integration with the Animal model will be required to access animal data for event generation
+Based on the zootechnician workflow, the following event workflows will be implemented initially:
+
+### 1. Health Check Workflow
+
+1. **Initial Setup**: When an animal is added to the system, a HealthCheck event is automatically scheduled for 2 weeks from the creation date.
+
+2. **Completion Flow**:
+   - Zootechnician views upcoming health checks in the calendar
+   - After examining the animal, they select the animal and click "Health check done" button
+   - System updates:
+     - The current event is marked as "Completed"
+     - The `lastHealthCheckDate` field is updated on the animal record
+     - A new HealthCheck event is automatically scheduled for 2 weeks later
+
+3. **UI Components**:
+   - Button on AnimalCard: "Health check done"
+   - Confirmation dialog with optional notes field
+   - Success notification confirming next check is scheduled
+
+### 2. Heat/Estrus to Insemination Workflow
+
+1. **Initial Setup**: No automatic setup; this workflow starts when heat signs are observed.
+
+2. **Heat Observation Flow**:
+   - Zootechnician observes heat signs in an animal
+   - They select the animal and click "Note heat symptoms" button
+   - System updates:
+     - Creates a HeatObserved event (marked as "Completed")
+     - Updates the `lastHeatDay` field on the animal record
+     - Updates the animal's `reproductiveStatus` to "open"
+     - Automatically schedules an Insemination event for 1 day later
+
+3. **Insemination Flow**:
+   - Zootechnician is notified when it's time for insemination
+   - After performing insemination, they click "Insemination done" button
+   - System updates:
+     - Marks the Insemination event as "Completed"
+     - Updates the animal's `reproductiveStatus` to "bred"
+     - Updates the `lastInseminationDate` field on the animal record
+     - Automatically schedules a PregnancyCheck event for 30 days later
+
+4. **UI Components**:
+   - Button on AnimalCard: "Note heat symptoms" 
+   - Button on AnimalCard or AnimalDetails: "Insemination done"
+   - Forms with optional fields for details of semen(tag, breed, serial number, name of company)
+
+### 3. Pregnancy Check Workflow
+
+1. **Initial Setup**: Automatically scheduled 30 days after an insemination is recorded.
+
+2. **Completion Flow**:
+   - Zootechnician is notified when it's time for pregnancy check
+   - After performing the check, they select the animal and click either:
+     - "Pregnancy confirmed" button
+     - "Not pregnant" button
+   - System updates based on result:
+     - If pregnant:
+       - Marks the PregnancyCheck event as "Completed"
+       - Updates animal's `reproductiveStatus` to "confirmed pregnant"
+       - Automatically schedules a DryOff event for later in pregnancy
+     - If not pregnant:
+       - Marks the PregnancyCheck event as "Completed"
+       - Updates animal's `reproductiveStatus` to "open"
+       - No automatic event is created (will wait for next heat observation)
+
+3. **UI Components**:
+   - Two buttons on AnimalCard or AnimalDetails: "Pregnancy confirmed" and "Not pregnant"
+   - Form with optional fields for pregnancy check details (notes)
+
+## Implementation Notes (Updated)
+
+1. **Button-Based Event Completion**:
+   - AnimalCard and AnimalDetails components need context-aware action buttons
+   - Buttons should only appear when relevant (based on animal status and gender)
+
+2. **Automated Event Generation**:
+   - Event service needs to handle automatic event creation based on completed events
+   - Event service should update animal fields when events are completed
+
+3. **Calendar Integration**:
+   - Calendar should clearly distinguish different event types with color coding
+   - Calendar should allow filtering by event type and location
+   - Day view should group events by location
+
+4. **Phase 1 Priorities**:
+   - Implement the three workflows described above
+   - Create the minimal UI components needed for these workflows
+   - Ensure proper animal status tracking

@@ -6,53 +6,97 @@ if (mongoose.models.Animal) {
 }
 
 const AnimalSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
   tag: {
     type: String,
     required: true,
     unique: true,
+    // Make the validation less strict to accommodate existing data
+    // match: /^[A-Z]{2}\d{12}$/ // Original: 2 uppercase letters followed by 12 digits
   },
   gender: {
     type: String,
     required: true,
     enum: ['female', 'male'],
   },
-  category: {
-    type: String,
-    required: true,
-    enum: ['adult', 'baby'],
-  },
   birthDate: {
     type: Date,
     required: true,
   },
-  lastExamination: {
+  breed: {
+    type: String,
+    required: false,
+  },
+  acquisitionDate: {
     type: Date,
     required: false,
   },
-  status: {
+  acquisitionType: {
     type: String,
-    required: true,
-    default: 'healthy',
+    required: false,
+    enum: ['born on farm', 'purchased'],
+  },
+  mothersTag: {
+    type: String,
+    required: false,
+  },
+  fathersTag: {
+    type: String,
+    required: false,
+  },
+  currentBCS: {
+    type: Number,
+    required: false,
+    min: 1,
+    max: 5,
+  },
+  currentWeight: {
+    type: Number,
+    required: false,
+  },
+  lastHealthCheckDate: {
+    type: Date,
+    required: false,
+  },
+  lastHeatDay: {
+    type: Date,
+    required: false,
+  },
+  lastInseminationDate: {
+    type: Date,
+    required: false,
+  },
+  reproductiveStatus: {
+    type: String,
+    required: false,
+    enum: ['not bred', 'bred', 'confirmed pregnant', 'open', 'dry'],
+    default: 'not bred'
+  },
+  lactationStatus: {
+    type: String,
+    required: false,
+    enum: ['lactating', 'dry', 'not applicable'],
+    default: 'not applicable'
+  },
+  notes: {
+    type: String,
+    required: false,
   },
   location: {
     type: String,
-    default: '',
+    required: false,
+  },
+  tags: {
+    type: [String],
+    required: false,
+  },
+  category: {
+    type: String,
+    required: true,
+    enum: ['adult', 'calf'],
+    default: 'adult'
   },
 }, {
   timestamps: true,
-});
-
-// Add pre-save hook to ensure location is preserved
-AnimalSchema.pre('save', function(next) {
-  // Ensure location is set properly
-  if (this.isModified('location')) {
-    console.log("Setting location during save:", this.location);
-  }
-  next();
 });
 
 export const Animal = mongoose.model('Animal', AnimalSchema);

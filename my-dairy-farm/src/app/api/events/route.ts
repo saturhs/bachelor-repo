@@ -1,102 +1,85 @@
-import { connectToDatabase } from '@/lib/db/mongodb';
-import { Event } from '@/lib/db/models/Event';
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/db/mongodb";
+import { Event } from "@/lib/db/models/Event";
+import { Animal } from "@/lib/db/models/Animal";
+import { addDays, addHours } from "date-fns";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
     
-    // Check if there's an id query parameter
+    // Get query parameters
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const animalId = searchParams.get("animalId");
+    const status = searchParams.get("status");
+    const eventType = searchParams.get("eventType");
     
-    // If there's an ID, return a single event
-    if (id) {
-      // Validate the ID format
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return NextResponse.json({ error: 'Invalid event ID format' }, { status: 400 });
-      }
-      
-      const event = await Event.findById(id);
-      
-      if (!event) {
-        return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-      }
-      
-      return NextResponse.json(event);
-    }
+    // Build query object
+    const query: Record<string, any> = {};
+    if (animalId) query.animalId = animalId;
+    if (status) query.status = status;
+    if (eventType) query.eventType = eventType;
     
-    // Otherwise return all events
-    const events = await Event.find();
-    return NextResponse.json(events);
+    const events = await Event.find(query).sort({ scheduledDate: 1 });
+    
+    // Transform MongoDB documents to match our Event interface
+    const transformedEvents = events.map(event => ({
+      id: event._id ? event._id.toString() : '',
+      eventType: event.eventType || '',
+      animalId: event.animalId ? event.animalId.toString() : '', // Add null check here
+      title: event.title || '',
+      description: event.description || '',
+      scheduledDate: event.scheduledDate || new Date(),
+      status: event.status || 'Pending',
+      priority: event.priority || 'Medium',
+      repeatPattern: event.repeatPattern || 'None',
+      repeatInterval: event.repeatInterval,
+      reminderTime: event.reminderTime,
+      notificationSent: event.notificationSent || false,
+      createdBy: event.createdBy ? event.createdBy.toString() : '',
+      location: event.location || '',
+      completedDate: event.completedDate,
+      completedBy: event.completedBy ? event.completedBy.toString() : '',
+      notes: event.notes || '',
+      associatedEvents: event.associatedEvents ? event.associatedEvents.map(id => id ? id.toString() : '') : [],
+      createdAt: event.createdAt || new Date(),
+      updatedAt: event.updatedAt || new Date()
+    }));
+
+    return NextResponse.json(transformedEvents);
   } catch (error) {
-    console.error('Error fetching events:', error);
-    return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
+    console.error("Error fetching events:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch events" },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: Request) {
-  await connectToDatabase();
-  const body = await request.json(); // Parse the JSON body
-  const newEvent = new Event(body);
-  await newEvent.save();
-  return NextResponse.json(newEvent, { status: 201 });
-}
-
-export async function PUT(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
     const body = await request.json();
     
-    // Make sure we have an id to update
-    if (!body._id) {
-      return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
-    }
+    const event = new Event(body);
+    const savedEvent = await event.save();
     
-    const updatedEvent = await Event.findByIdAndUpdate(
-      body._id,
-      { $set: body },
-      { new: true, runValidators: true }
+    // Transform to match our interface
+    const transformedEvent = {
+      id: savedEvent._id.toString(),
+      eventType: savedEvent.eventType,
+      animalId: savedEvent.animalId.toString(),
+      // ... other fields ...
+      createdAt: savedEvent.createdAt,
+      updatedAt: savedEvent.updatedAt
+    };
+    
+    return NextResponse.json(transformedEvent, { status: 201 });
+  } catch (error) {
+    console.error("Error creating event:", error);
+    return NextResponse.json(
+      { error: "Failed to create event" },
+      { status: 500 }
     );
-    
-    if (!updatedEvent) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-    }
-    
-    return NextResponse.json(updatedEvent);
-  } catch (error) {
-    console.error('Error updating event:', error);
-    return NextResponse.json({ error: 'Failed to update event' }, { status: 500 });
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    await connectToDatabase();
-    
-    // Get the ID from the URL
-    const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-    
-    if (!id) {
-      return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
-    }
-    
-    // Check if the ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid event ID format' }, { status: 400 });
-    }
-    
-    const deletedEvent = await Event.findByIdAndDelete(id);
-    
-    if (!deletedEvent) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-    }
-    
-    return NextResponse.json({ message: 'Event deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting event:', error);
-    return NextResponse.json({ error: 'Failed to delete event' }, { status: 500 });
   }
 }

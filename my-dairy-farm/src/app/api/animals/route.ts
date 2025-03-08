@@ -1,163 +1,171 @@
-import { connectToDatabase } from '@/lib/db/mongodb';
-import { Animal } from '@/lib/db/models/Animal';
-import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/db/mongodb";
+import { Animal } from "@/lib/db/models/Animal";
 
-// Helper function to transform MongoDB document to our frontend model
-function transformAnimal(animal: any) {
-  return {
-    id: animal._id.toString(),
-    name: animal.name,
-    tag: animal.tag,
-    gender: animal.gender,
-    category: animal.category,
-    birthDate: animal.birthDate,
-    lastExamination: animal.lastExamination,
-    status: animal.status,
-    location: animal.location || '',  // Changed field name from object_id to location
-    createdAt: animal.createdAt,
-    updatedAt: animal.updatedAt
-  };
-}
-
-export async function GET(request: Request) {
+export async function GET() {
   try {
     await connectToDatabase();
+    const animals = await Animal.find({});
     
-    // Check if there's an id query parameter
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
-    // If there's an ID, return a single animal
-    if (id) {
-      // Validate the ID format
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return NextResponse.json({ error: 'Invalid animal ID format' }, { status: 400 });
-      }
-      
-      const animal = await Animal.findById(id);
-      
-      if (!animal) {
-        return NextResponse.json({ error: 'Animal not found' }, { status: 404 });
-      }
-      
-      return NextResponse.json(transformAnimal(animal));
-    }
-    
-    // Otherwise return all animals
-    const animals = await Animal.find();
-    return NextResponse.json(animals.map(transformAnimal));
+    // Transform MongoDB documents to match our Animal interface
+    const transformedAnimals = animals.map(animal => ({
+      id: animal._id.toString(),
+      tag: animal.tag,
+      gender: animal.gender,
+      birthDate: animal.birthDate,
+      breed: animal.breed,
+      acquisitionDate: animal.acquisitionDate,
+      acquisitionType: animal.acquisitionType,
+      mothersTag: animal.mothersTag,
+      fathersTag: animal.fathersTag,
+      currentBCS: animal.currentBCS,
+      currentWeight: animal.currentWeight,
+      lastHealthCheckDate: animal.lastHealthCheckDate,
+      lastHeatDay: animal.lastHeatDay,
+      lastInseminationDate: animal.lastInseminationDate,
+      reproductiveStatus: animal.reproductiveStatus || 'not bred',
+      lactationStatus: animal.lactationStatus || 'not applicable',
+      notes: animal.notes,
+      location: animal.location,
+      tags: animal.tags || [],
+      category: animal.category,
+      createdAt: animal.createdAt,
+      updatedAt: animal.updatedAt
+    }));
+
+    return NextResponse.json(transformedAnimals);
   } catch (error) {
-    console.error('Error fetching animals:', error);
-    return NextResponse.json({ error: 'Failed to fetch animals' }, { status: 500 });
+    console.error("Error fetching animals:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch animals" },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
     
-    // Log the raw request for debugging
-    const text = await request.text();
-    console.log("Raw request body:", text);
+    const rawBody = await request.text();
+    console.log("Raw request body:", rawBody);
     
-    // Parse the JSON
-    const body = JSON.parse(text);
+    const body = JSON.parse(rawBody);
     console.log("Parsed body:", body);
-    console.log("Location field:", body.location);
     
-    // Create a new animal document with explicit field assignment
-    const newAnimal = new Animal({
-      name: body.name,
+    // Create a new animal with all the fields from the form
+    const animalData: Record<string, any> = {
       tag: body.tag,
       gender: body.gender,
-      category: body.category,
       birthDate: body.birthDate,
-      status: body.status || 'healthy',
-      location: body.location || '', // Explicitly assign location
-      lastExamination: body.lastExamination || null
-    });
+      breed: body.breed || undefined,
+      acquisitionDate: body.acquisitionDate || undefined,
+      acquisitionType: body.acquisitionType || undefined,
+      mothersTag: body.mothersTag || undefined,
+      fathersTag: body.fathersTag || undefined,
+      currentBCS: body.currentBCS ? Number(body.currentBCS) : undefined,
+      currentWeight: body.currentWeight ? Number(body.currentWeight) : undefined,
+      lastHealthCheckDate: body.lastHealthCheckDate || undefined,
+      lastHeatDay: body.lastHeatDay || undefined,
+      lastInseminationDate: body.lastInseminationDate || undefined,
+      reproductiveStatus: body.reproductiveStatus || 'not bred',
+      lactationStatus: body.lactationStatus || 'not applicable',
+      notes: body.notes || undefined,
+      location: body.location || undefined,
+      category: body.category || 'adult'
+    };
     
-    console.log("Animal object before save:", newAnimal);
-    
-    // Pre-save hook to ensure location is set
-    newAnimal.schema.pre('save', function() {
-      if (this.isNew && body.location) {
-        this.location = body.location;
+    // Clean up the data by removing undefined values and empty strings
+    const cleanAnimalData = Object.entries(animalData).reduce((acc, [key, value]) => {
+      // Skip undefined values
+      if (value === undefined) {
+        return acc;
       }
-    });
+      
+      // Skip empty strings
+      if (typeof value === 'string' && value.trim() === '') {
+        return acc;
+      }
+      
+      // Keep valid values
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, any>);
     
-    // Save the document
-    await newAnimal.save();
+    console.log("Animal object before save:", cleanAnimalData);
     
-    // Log what was saved
-    console.log("Saved animal:", newAnimal);
-    console.log("Location after save:", newAnimal.location);
+    const animal = new Animal(cleanAnimalData);
+    const savedAnimal = await animal.save();
     
-    // Use our transform function
-    const transformed = transformAnimal(newAnimal);
-    console.log("Transformed for response:", transformed);
+    console.log("Saved animal:", savedAnimal);
+    console.log("Location after save:", savedAnimal.location);
     
-    return NextResponse.json(transformed, { status: 201 });
-  } catch (error) {
-    console.error('Error creating animal:', error);
-    return NextResponse.json({ error: 'Failed to create animal' }, { status: 500 });
-  }
-}
+    // Transform to match our interface
+    const transformedAnimal = {
+      id: savedAnimal._id.toString(),
+      tag: savedAnimal.tag,
+      gender: savedAnimal.gender,
+      birthDate: savedAnimal.birthDate,
+      breed: savedAnimal.breed,
+      acquisitionDate: savedAnimal.acquisitionDate,
+      acquisitionType: savedAnimal.acquisitionType,
+      mothersTag: savedAnimal.mothersTag,
+      fathersTag: savedAnimal.fathersTag,
+      currentBCS: savedAnimal.currentBCS,
+      currentWeight: savedAnimal.currentWeight,
+      lastHealthCheckDate: savedAnimal.lastHealthCheckDate,
+      lastHeatDay: savedAnimal.lastHeatDay,
+      lastInseminationDate: savedAnimal.lastInseminationDate,
+      reproductiveStatus: savedAnimal.reproductiveStatus,
+      lactationStatus: savedAnimal.lactationStatus,
+      notes: savedAnimal.notes,
+      location: savedAnimal.location,
+      tags: savedAnimal.tags || [],
+      category: savedAnimal.category,
+      createdAt: savedAnimal.createdAt,
+      updatedAt: savedAnimal.updatedAt
+    };
+    
+    console.log("Transformed for response:", transformedAnimal);
 
-export async function PUT(request: Request) {
-  try {
-    await connectToDatabase();
-    const body = await request.json();
-    
-    // Make sure we have an id to update
-    if (!body._id) {
-      return NextResponse.json({ error: 'Animal ID is required' }, { status: 400 });
-    }
-    
-    const updatedAnimal = await Animal.findByIdAndUpdate(
-      body._id,
-      { $set: body },
-      { new: true, runValidators: true }
+    return NextResponse.json(transformedAnimal, { status: 201 });
+  } catch (error) {
+    console.error("Error creating animal:", error);
+    return NextResponse.json(
+      { error: "Failed to create animal" },
+      { status: 500 }
     );
-    
-    if (!updatedAnimal) {
-      return NextResponse.json({ error: 'Animal not found' }, { status: 404 });
-    }
-    
-    return NextResponse.json(transformAnimal(updatedAnimal));
-  } catch (error) {
-    console.error('Error updating animal:', error);
-    return NextResponse.json({ error: 'Failed to update animal' }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     await connectToDatabase();
-    
-    // Get the ID from the URL
-    const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-    
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
     if (!id) {
-      return NextResponse.json({ error: 'Animal ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Animal ID is required" },
+        { status: 400 }
+      );
     }
-    
-    // Check if the ID is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid animal ID format' }, { status: 400 });
+
+    const result = await Animal.findByIdAndDelete(id);
+
+    if (!result) {
+      return NextResponse.json(
+        { error: "Animal not found" },
+        { status: 404 }
+      );
     }
-    
-    const deletedAnimal = await Animal.findByIdAndDelete(id);
-    
-    if (!deletedAnimal) {
-      return NextResponse.json({ error: 'Animal not found' }, { status: 404 });
-    }
-    
-    return NextResponse.json({ message: 'Animal deleted successfully' });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting animal:', error);
-    return NextResponse.json({ error: 'Failed to delete animal' }, { status: 500 });
+    console.error("Error deleting animal:", error);
+    return NextResponse.json(
+      { error: "Failed to delete animal" },
+      { status: 500 }
+    );
   }
 }

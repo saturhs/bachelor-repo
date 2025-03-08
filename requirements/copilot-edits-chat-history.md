@@ -70,6 +70,34 @@ When you're ready to continue working tomorrow, you can simply refer back to the
 
 **Copilot**: *[Saved the conversation history to this file]*
 
+### Workflow Implementation Details
+**User**: I've removed name field from animal model cos its not used on a farm in real life. Also I see that u need more context how the user would use the app. So heres the work flow of the user. Zootechnicians at first would need to add all animals they have on a farm, specifying all required informations, like location. Then they would go to check on animals, when they ffinish for example health check on one of them they can press a button on examined animal "Health check done", then application will automatically add an event for 2 weeks later, for another health check. So 2 weeks later, zootechnician should see in calendar that today they need to check health on this animal. The same when they see heat/estrus symptoms, they would press button "Note heat symptoms", then application would automatically set a reminder for 12 hours later. When they would inseminate the animal they would note that information somehow, so app can set an event to check it after 30 days for pregnancy symptoms, etc etc. For now i want to implement two events in this way: healthCheck that should be repeated every two weeks, estrus/heat that should remind 12h later to inseminate and last pregnancy check that should be reminded every 30 days after insemination. Can we do that?
+
+**Copilot**: 
+Based on your workflow description, I've made the following updates:
+
+1. **Animal Model**:
+   - Added `lastInseminationDate` field to track when insemination was performed
+   - Confirmed removal of the `name` field as it's not used in real farms
+
+2. **Event Model**:
+   - Added detailed workflow implementation section explaining the three key workflows:
+     - Health Check Workflow (repeating every 2 weeks)
+     - Heat/Estrus to Insemination Workflow (12-hour trigger)
+     - Pregnancy Check Workflow (30 days after insemination)
+   - For each workflow, detailed:
+     - Initial setup
+     - Completion flow
+     - Required UI components
+
+3. **Implementation Notes**:
+   - Added specifics about button-based event completion
+   - Updated automated event generation requirements
+   - Added calendar integration details
+   - Identified Phase 1 implementation priorities
+
+The updated specifications now include concrete implementation plans for the three workflows you want to focus on initially.
+
 ## Summary of Accomplishments
 
 1. **Animal Model Specification**:

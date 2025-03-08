@@ -44,7 +44,7 @@ export default function AnimalsPage() {
   // Then filter by category and gender
   const females = filteredByLocation.filter(animal => animal.gender === 'female' && animal.category === 'adult');
   const males = filteredByLocation.filter(animal => animal.gender === 'male' && animal.category === 'adult');
-  const calves = filteredByLocation.filter(animal => animal.category === 'baby');
+  const calves = filteredByLocation.filter(animal => animal.category === 'calf'); // Changed from 'baby' to 'calf'
 
   return (
     <main className="min-h-screen bg-[#faf9f6] relative">
