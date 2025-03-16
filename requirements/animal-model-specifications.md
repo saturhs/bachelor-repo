@@ -21,13 +21,13 @@ This document outlines the agreed specifications for the Animal model used throu
 | lastHeatDay | Date | Date of the animal's last heat period | Optional | `2023-05-28` |
 | lastInseminationDate | Date | Date of the animal's last insemination | Optional | `2023-05-29` |
 | reproductiveStatus | String | Current breeding status | Enum: `not bred`, `bred`, `confirmed pregnant`, `open`, `dry` | `bred` |
-| lactationStatus | String | Current lactation status | Enum: `lactating`, `dry`, `not applicable` | `lactating` |
 | notes | String | Additional information | Optional | `Needs special diet` |
 | location | String | Building or pen where animal is housed | Optional | `Barn A` |
 | tags | Array of Strings | Additional categorization tags | Optional | `["special attention", "show quality"]` |
 | category | String | Age category | Enum: `adult`, `calf` | `adult` |
 | createdAt | Date | Record creation timestamp | Auto-generated | `2023-01-15T12:00:00Z` |
 | updatedAt | Date | Record last update timestamp | Auto-generated | `2023-04-20T15:30:00Z` |
+
 
 ## AnimalCard Display
 

@@ -71,12 +71,6 @@ const AnimalSchema = new mongoose.Schema({
     enum: ['not bred', 'bred', 'confirmed pregnant', 'open', 'dry'],
     default: 'not bred'
   },
-  lactationStatus: {
-    type: String,
-    required: false,
-    enum: ['lactating', 'dry', 'not applicable'],
-    default: 'not applicable'
-  },
   notes: {
     type: String,
     required: false,

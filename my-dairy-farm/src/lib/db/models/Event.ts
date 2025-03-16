@@ -5,15 +5,18 @@ if (mongoose.models.Event) {
   delete mongoose.models.Event;
 }
 
-const reminderTimeSchema = new mongoose.Schema({
-  value: {
-    type: Number,
-    required: true,
-  },
-  unit: {
+const semenDetailsSchema = new mongoose.Schema({
+  bullTag: {
     type: String,
-    required: true,
-    enum: ['minute', 'hour', 'day', 'week'],
+    required: false,
+  },
+  serialNumber: {
+    type: String,
+    required: false,
+  },
+  producer: {
+    type: String,
+    required: false,
   }
 }, { _id: false });
 
@@ -21,7 +24,6 @@ const EventSchema = new mongoose.Schema({
   eventType: {
     type: String,
     required: true,
-    enum: ['HealthCheck', 'Insemination', 'HeatObserved', 'PregnancyCheck', 'BCSExamination', 'DryOff', 'ExpectedCalving'],
   },
   animalId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -51,21 +53,6 @@ const EventSchema = new mongoose.Schema({
     required: true,
     enum: ['High', 'Medium', 'Low'],
     default: 'Medium',
-  },
-  repeatPattern: {
-    type: String,
-    required: false,
-    enum: ['None', 'Daily', 'Weekly', 'Monthly', 'Custom'],
-    default: 'None',
-  },
-  repeatInterval: {
-    type: Number,
-    required: false,
-    min: 1,
-  },
-  reminderTime: {
-    type: reminderTimeSchema,
-    required: false,
   },
   notificationSent: {
     type: Boolean,
@@ -97,6 +84,16 @@ const EventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event',
   }],
+  semenDetails: {
+    type: semenDetailsSchema,
+    required: false,
+  },
+  // Add new result field for tracking outcomes of events like pregnancy checks
+  result: {
+    type: String,
+    enum: ['positive', 'negative', null],
+    default: null
+  },
 }, {
   timestamps: true,
 });

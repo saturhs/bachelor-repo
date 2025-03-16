@@ -4,6 +4,7 @@ import { Event } from "@/lib/db/models/Event";
 import { Animal } from "@/lib/db/models/Animal";
 import { addDays, addHours } from "date-fns";
 import mongoose from "mongoose";
+import { getSettings } from "@/lib/settings";
 
 // Helper function to create events
 async function createEvent(data: any) {
@@ -47,9 +48,6 @@ export async function GET(request: NextRequest) {
       scheduledDate: event.scheduledDate,
       status: event.status,
       priority: event.priority,
-      repeatPattern: event.repeatPattern,
-      repeatInterval: event.repeatInterval,
-      reminderTime: event.reminderTime,
       notificationSent: event.notificationSent,
       createdBy: event.createdBy?.toString(),
       location: event.location,
@@ -75,7 +73,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
     const body = await request.json();
-    const { animalId, action, notes } = body;
+    const { animalId, action, notes, semenDetails } = body;
     
     if (!animalId) {
       return NextResponse.json(
@@ -105,7 +103,7 @@ export async function POST(request: NextRequest) {
         break;
       }
       case "insemination": {
-        result = await handleInsemination(animalId, animal, notes);
+        result = await handleInsemination(animalId, animal, notes, semenDetails);
         break;
       }
       case "pregnancy-confirmed": {
@@ -114,6 +112,14 @@ export async function POST(request: NextRequest) {
       }
       case "not-pregnant": {
         result = await handleNotPregnant(animalId, animal, notes);
+        break;
+      }
+      case "dry-off-completed": {
+        result = await handleDryOff(animalId, animal, notes);
+        break;
+      }
+      case "calving-completed": {
+        result = await handleCalving(animalId, animal, notes);
         break;
       }
       default:
@@ -136,6 +142,10 @@ export async function POST(request: NextRequest) {
 // Handler for Health Check workflow
 async function handleHealthCheck(animalId: string, animal: any, notes?: string) {
   try {
+    // Get settings for health check interval
+    const settings = await getSettings();
+    const healthCheckIntervalDays = settings.healthCheckIntervalDays;
+    
     // 1. Find any pending health check event for this animal
     const pendingEvent = await findPendingEvent(animalId, "HealthCheck");
     
@@ -153,8 +163,8 @@ async function handleHealthCheck(animalId: string, animal: any, notes?: string) 
       lastHealthCheckDate: new Date()
     }, { runValidators: false });
     
-    // 4. Create a new health check event for 2 weeks later
-    const nextCheckDate = addDays(new Date(), 14);
+    // 4. Create a new health check event using the interval from settings
+    const nextCheckDate = addDays(new Date(), healthCheckIntervalDays);
     
     const newEvent = await createEvent({
       eventType: "HealthCheck",
@@ -164,9 +174,7 @@ async function handleHealthCheck(animalId: string, animal: any, notes?: string) 
       scheduledDate: nextCheckDate,
       status: "Pending",
       priority: "Medium",
-      repeatPattern: "None",
-      location: animal.location,
-      reminderTime: { value: 1, unit: "day" }
+      location: animal.location
     });
     
     return {
@@ -221,9 +229,7 @@ async function handleHeatSymptoms(animalId: string, animal: any, notes?: string)
       scheduledDate: inseminationDate,
       status: "Pending",
       priority: "High",
-      repeatPattern: "None",
       location: animal.location,
-      reminderTime: { value: 2, unit: "hour" },
       associatedEvents: [heatEvent._id]
     });
     
@@ -241,9 +247,13 @@ async function handleHeatSymptoms(animalId: string, animal: any, notes?: string)
   }
 }
 
-// Handler for Insemination workflow
-async function handleInsemination(animalId: string, animal: any, notes?: string) {
+// Updated Handler for Insemination workflow
+async function handleInsemination(animalId: string, animal: any, notes?: string, semenDetails?: any) {
   try {
+    // Get settings for pregnancy check timing
+    const settings = await getSettings();
+    const inseminationToPregnancyCheckDays = settings.inseminationToPregnancyCheckDays;
+    
     // 1. Find any pending insemination event for this animal
     const pendingEvent = await findPendingEvent(animalId, "Insemination");
     
@@ -252,6 +262,12 @@ async function handleInsemination(animalId: string, animal: any, notes?: string)
       pendingEvent.status = "Completed";
       pendingEvent.completedDate = new Date();
       pendingEvent.notes = notes || pendingEvent.notes;
+      
+      // Add semen details if provided
+      if (semenDetails) {
+        pendingEvent.semenDetails = semenDetails;
+      }
+      
       await pendingEvent.save();
     }
     
@@ -261,8 +277,29 @@ async function handleInsemination(animalId: string, animal: any, notes?: string)
       reproductiveStatus: "bred"
     }, { runValidators: false });
     
-    // 4. Schedule a pregnancy check for 30 days later
-    const pregnancyCheckDate = addDays(new Date(), 30);
+    // 4. Create insemination event if none was pending
+    let inseminationEvent = pendingEvent;
+    
+    if (!inseminationEvent) {
+      const inseminationData = {
+        eventType: "Insemination",
+        animalId: new mongoose.Types.ObjectId(animalId),
+        title: `Insemination for ${animal.tag}`,
+        description: "Insemination performed",
+        scheduledDate: new Date(),
+        status: "Completed",
+        completedDate: new Date(),
+        priority: "High",
+        notes: notes || "",
+        location: animal.location,
+        semenDetails: semenDetails || {}
+      };
+      
+      inseminationEvent = await createEvent(inseminationData);
+    }
+    
+    // 5. Schedule a pregnancy check using the timing from settings
+    const pregnancyCheckDate = addDays(new Date(), inseminationToPregnancyCheckDays);
     
     const pregnancyCheckEvent = await createEvent({
       eventType: "PregnancyCheck",
@@ -272,10 +309,8 @@ async function handleInsemination(animalId: string, animal: any, notes?: string)
       scheduledDate: pregnancyCheckDate,
       status: "Pending",
       priority: "High",
-      repeatPattern: "None",
       location: animal.location,
-      reminderTime: { value: 1, unit: "day" },
-      associatedEvents: pendingEvent ? [pendingEvent._id] : []
+      associatedEvents: inseminationEvent ? [inseminationEvent._id] : []
     });
     
     return {
@@ -283,8 +318,9 @@ async function handleInsemination(animalId: string, animal: any, notes?: string)
       message: "Insemination recorded and pregnancy check scheduled",
       lastInseminationDate: new Date(),
       pregnancyCheckDate,
-      completedEvent: pendingEvent ? pendingEvent._id : null,
-      pregnancyCheckEvent: pregnancyCheckEvent._id
+      completedEvent: inseminationEvent ? inseminationEvent._id : null,
+      pregnancyCheckEvent: pregnancyCheckEvent._id,
+      semenDetails // Return the semen details in the response
     };
   } catch (error) {
     console.error("Error in handleInsemination:", error);
@@ -295,6 +331,11 @@ async function handleInsemination(animalId: string, animal: any, notes?: string)
 // Handler for Pregnancy Confirmed workflow
 async function handlePregnancyConfirmed(animalId: string, animal: any, notes?: string) {
   try {
+    // Get settings for pregnancy length and dry-off timing
+    const settings = await getSettings();
+    const pregnancyLengthDays = settings.pregnancyLengthDays;
+    const dryOffDaysBeforeCalving = settings.dryOffDaysBeforeCalving;
+    
     // 1. Find any pending pregnancy check event for this animal
     const pendingEvent = await findPendingEvent(animalId, "PregnancyCheck");
     
@@ -303,6 +344,10 @@ async function handlePregnancyConfirmed(animalId: string, animal: any, notes?: s
       pendingEvent.status = "Completed";
       pendingEvent.completedDate = new Date();
       pendingEvent.notes = notes || pendingEvent.notes;
+      
+      // Set result field instead of relying on notes
+      pendingEvent.result = 'positive';
+      
       await pendingEvent.save();
     }
     
@@ -311,13 +356,14 @@ async function handlePregnancyConfirmed(animalId: string, animal: any, notes?: s
       reproductiveStatus: "confirmed pregnant"
     }, { runValidators: false });
     
-    // 4. Calculate expected calving date (about 280 days after last insemination)
+    // 4. Calculate expected calving date based on settings
     let expectedCalvingDate;
     if (animal.lastInseminationDate) {
-      expectedCalvingDate = addDays(new Date(animal.lastInseminationDate), 280);
+      // Use pregnancy length from settings
+      expectedCalvingDate = addDays(new Date(animal.lastInseminationDate), pregnancyLengthDays);
       
-      // Schedule a dry-off event 60 days before expected calving
-      const dryOffDate = addDays(expectedCalvingDate, -60);
+      // Calculate dry-off date based on settings
+      const dryOffDate = addDays(expectedCalvingDate, -dryOffDaysBeforeCalving);
       
       const dryOffEvent = await createEvent({
         eventType: "DryOff",
@@ -327,9 +373,7 @@ async function handlePregnancyConfirmed(animalId: string, animal: any, notes?: s
         scheduledDate: dryOffDate,
         status: "Pending",
         priority: "High",
-        repeatPattern: "None",
-        location: animal.location,
-        reminderTime: { value: 1, unit: "day" }
+        location: animal.location
       });
       
       // Schedule an expected calving event
@@ -341,9 +385,7 @@ async function handlePregnancyConfirmed(animalId: string, animal: any, notes?: s
         scheduledDate: expectedCalvingDate,
         status: "Pending",
         priority: "High",
-        repeatPattern: "None",
-        location: animal.location,
-        reminderTime: { value: 7, unit: "day" }
+        location: animal.location
       });
       
       return {
@@ -379,21 +421,119 @@ async function handleNotPregnant(animalId: string, animal: any, notes?: string) 
       pendingEvent.status = "Completed";
       pendingEvent.completedDate = new Date();
       pendingEvent.notes = notes || pendingEvent.notes;
+      
+      // Set result field instead of relying on notes
+      pendingEvent.result = 'negative';
+      
       await pendingEvent.save();
     }
     
     // 3. Update the animal's status using findByIdAndUpdate
+    // Changed from "open" to "not bred" as we need to wait for estrus symptoms again
     await Animal.findByIdAndUpdate(animalId, {
-      reproductiveStatus: "open"
+      reproductiveStatus: "not bred"
     }, { runValidators: false });
     
     return {
       success: true,
-      message: "Animal marked as not pregnant and returned to open status",
+      message: "Animal marked as not pregnant and returned to not bred status",
       completedEvent: pendingEvent ? pendingEvent._id : null
     };
   } catch (error) {
     console.error("Error in handleNotPregnant:", error);
+    throw error;
+  }
+}
+
+// Handler for Dry Off workflow
+async function handleDryOff(animalId: string, animal: any, notes?: string) {
+  try {
+    // 1. Find any pending dry-off event for this animal
+    const pendingEvent = await findPendingEvent(animalId, "DryOff");
+    
+    // 2. If found, mark it as completed
+    if (pendingEvent) {
+      pendingEvent.status = "Completed";
+      pendingEvent.completedDate = new Date();
+      pendingEvent.notes = notes || pendingEvent.notes;
+      await pendingEvent.save();
+    }
+    
+    // 3. Update the animal's status to "dry"
+    await Animal.findByIdAndUpdate(animalId, {
+      reproductiveStatus: "dry"
+    }, { runValidators: false });
+    
+    return {
+      success: true,
+      message: "Animal marked as dry",
+      completedEvent: pendingEvent ? pendingEvent._id : null
+    };
+  } catch (error) {
+    console.error("Error in handleDryOff:", error);
+    throw error;
+  }
+}
+
+// Handler for Calving workflow
+async function handleCalving(animalId: string, animal: any, notes?: string) {
+  try {
+    // 1. Find any pending calving event for this animal
+    const pendingEvent = await findPendingEvent(animalId, "ExpectedCalving");
+    
+    // 2. If found, mark it as completed
+    if (pendingEvent) {
+      pendingEvent.status = "Completed";
+      pendingEvent.completedDate = new Date();
+      pendingEvent.notes = notes || pendingEvent.notes;
+      await pendingEvent.save();
+    }
+    
+    // 3. Record the calving event even if no pending event was found
+    const calvingEvent = await createEvent({
+      eventType: "Calving",
+      animalId: new mongoose.Types.ObjectId(animalId),
+      title: `Calving for ${animal.tag}`,
+      description: "Animal has calved",
+      scheduledDate: new Date(),
+      status: "Completed",
+      completedDate: new Date(),
+      priority: "High",
+      notes: notes || "",
+      location: animal.location
+    });
+    
+    // 4. Update the animal's status to "not bred" after calving (changed from "open")
+    // Also clear the lastInseminationDate as that was for the previous pregnancy
+    await Animal.findByIdAndUpdate(animalId, {
+      reproductiveStatus: "not bred", // Changed from "open" to "not bred"
+      lastInseminationDate: null
+    }, { runValidators: false });
+    
+    // 5. Schedule a health check for 2 weeks later (post-calving check)
+    const postCalvingCheckDate = addDays(new Date(), 14);
+    
+    const healthCheckEvent = await createEvent({
+      eventType: "HealthCheck",
+      animalId: new mongoose.Types.ObjectId(animalId),
+      title: `Post-Calving Check for ${animal.tag}`,
+      description: "Post-calving health examination",
+      scheduledDate: postCalvingCheckDate,
+      status: "Pending",
+      priority: "High",
+      location: animal.location,
+      associatedEvents: [calvingEvent._id]
+    });
+    
+    return {
+      success: true,
+      message: "Calving recorded and animal status reset for new breeding cycle",
+      completedEvent: pendingEvent ? pendingEvent._id : null,
+      calvingEvent: calvingEvent._id,
+      healthCheckEvent: healthCheckEvent._id
+    };
+  } catch (error) {
+    console.error("Error in handleCalving:", error);
     throw error;
   }
 }

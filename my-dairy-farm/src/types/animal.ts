@@ -14,7 +14,6 @@ export interface Animal {
     lastHeatDay?: Date;
     lastInseminationDate?: Date;
     reproductiveStatus: 'not bred' | 'bred' | 'confirmed pregnant' | 'open' | 'dry';
-    lactationStatus: 'lactating' | 'dry' | 'not applicable';
     notes?: string;
     location?: string;
     tags?: string[];

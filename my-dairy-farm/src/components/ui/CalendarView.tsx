@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft } from "lucide-react";
+import { CustomEventType } from "@/types/customEventType";
 
-// Define the event types we want to display in the calendar
-const CALENDAR_EVENT_TYPES = ['HealthCheck', 'Insemination', 'PregnancyCheck'];
+// Define the standard event types we want to display in the calendar
+const STANDARD_EVENT_TYPES = ['HealthCheck', 'Insemination', 'PregnancyCheck', 'DryOff', 'ExpectedCalving'];
 const DEFAULT_LOCATION = "Farm"; // Default location for events with no location
 
 export function CalendarView() {
@@ -24,38 +25,63 @@ export function CalendarView() {
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [selectedDayLocations, setSelectedDayLocations] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [totalAnimals, setTotalAnimals] = useState<number>(0);
+  const [customEventTypes, setCustomEventTypes] = useState<CustomEventType[]>([]);
+  const [availableEventTypes, setAvailableEventTypes] = useState<string[]>([]);
   
-  // Fetch events
+  // Fetch events, custom event types, and total animal count
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/events');
         
-        if (!res.ok) {
+        // Fetch events
+        const eventsRes = await fetch('/api/events');
+        if (!eventsRes.ok) {
           throw new Error('Failed to fetch events');
         }
+        const eventsData = await eventsRes.json();
         
-        const data = await res.json();
+        // Fetch custom event types
+        const customEventsRes = await fetch('/api/custom-event-types');
+        if (!customEventsRes.ok) {
+          throw new Error('Failed to fetch custom event types');
+        }
+        const customEventsData = await customEventsRes.json();
+        setCustomEventTypes(customEventsData);
         
-        // Filter to only include scheduled events (HealthCheck, Insemination, PregnancyCheck)
-        // and only Pending events (not completed or cancelled)
-        const scheduledEvents = data.filter((event: Event) => 
-          CALENDAR_EVENT_TYPES.includes(event.eventType) && 
+        // Extract custom event type names
+        const customEventNames = customEventsData.map((eventType: CustomEventType) => eventType.name);
+        
+        // Combine standard and custom event types for filter options
+        setAvailableEventTypes([...STANDARD_EVENT_TYPES, ...customEventNames]);
+        
+        // Include both standard and custom events
+        const allEvents = eventsData.filter((event: Event) => 
+          (STANDARD_EVENT_TYPES.includes(event.eventType) || customEventNames.includes(event.eventType)) &&
           event.status === 'Pending'
         );
         
-        setEvents(scheduledEvents || []);
+        setEvents(allEvents || []);
+        
+        // Fetch animal count
+        const animalsRes = await fetch('/api/animals');
+        if (!animalsRes.ok) {
+          throw new Error('Failed to fetch animals');
+        }
+        const animalsData = await animalsRes.json();
+        setTotalAnimals(animalsData.length);
+        
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching events:', error);
-        setError('Failed to load events. Please try again later.');
+        console.error('Error fetching data:', error);
+        setError('Failed to load data. Please try again later.');
         setLoading(false);
         setEvents([]);
       }
     };
 
-    fetchEvents();
+    fetchData();
   }, []);
 
   // Navigate to previous month
@@ -96,11 +122,22 @@ export function CalendarView() {
     return getEventsForDay(day).length;
   };
 
-  // Get color class based on event count
+  // Get color class based on event count relative to total animals
   const getColorForEvents = (count: number) => {
     if (count === 0) return "";
-    if (count <= 3) return "bg-green-100 hover:bg-green-200";
-    if (count <= 7) return "bg-yellow-100 hover:bg-yellow-200";
+    
+    // If there are no animals in the system, use fixed thresholds
+    if (totalAnimals === 0) {
+      if (count <= 3) return "bg-green-100 hover:bg-green-200";
+      if (count <= 7) return "bg-yellow-100 hover:bg-yellow-200";
+      return "bg-red-100 hover:bg-red-200";
+    }
+    
+    // Calculate percentage of animals that have events on this day
+    const percentage = (count / totalAnimals) * 100;
+    
+    if (percentage <= 15) return "bg-green-100 hover:bg-green-200";
+    if (percentage <= 30) return "bg-yellow-100 hover:bg-yellow-200";
     return "bg-red-100 hover:bg-red-200";
   };
 
@@ -172,6 +209,12 @@ export function CalendarView() {
     return getEventsForLocation(location).length;
   };
 
+  // Get event type display name (could be customized in the future)
+  const getEventTypeDisplayName = (eventType: string) => {
+    // For now, just return the event type name
+    return eventType;
+  };
+
   return (
     <div className="w-full">
       {error && (
@@ -205,9 +248,11 @@ export function CalendarView() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Events</SelectItem>
-              <SelectItem value="HealthCheck">Health Checks</SelectItem>
-              <SelectItem value="Insemination">Inseminations</SelectItem>
-              <SelectItem value="PregnancyCheck">Pregnancy Checks</SelectItem>
+              {availableEventTypes.map(eventType => (
+                <SelectItem key={eventType} value={eventType}>
+                  {getEventTypeDisplayName(eventType)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

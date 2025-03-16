@@ -30,7 +30,6 @@ export function AddAnimalForm() {
     lastHeatDay: "",
     lastInseminationDate: "",
     reproductiveStatus: "not bred",
-    lactationStatus: "not applicable",
     notes: "",
     location: "",
     category: "adult"
@@ -80,7 +79,6 @@ export function AddAnimalForm() {
         lastHeatDay: "",
         lastInseminationDate: "",
         reproductiveStatus: "not bred",
-        lactationStatus: "not applicable",
         notes: "",
         location: "",
         category: "adult"
@@ -360,26 +358,6 @@ export function AddAnimalForm() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lactationStatus">Lactation Status</Label>
-                  <Select 
-                    name="lactationStatus" 
-                    value={formData.lactationStatus} 
-                    onValueChange={(value) => handleSelectChange("lactationStatus", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lactating">Lactating</SelectItem>
-                      <SelectItem value="dry">Dry</SelectItem>
-                      <SelectItem value="not applicable">Not Applicable</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
                   <Label htmlFor="lastHeatDay">Last Heat Date</Label>
                   <Input
                     id="lastHeatDay"
@@ -389,6 +367,9 @@ export function AddAnimalForm() {
                     onChange={handleChange}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="lastInseminationDate">Last Insemination Date</Label>
                   <Input
@@ -398,6 +379,9 @@ export function AddAnimalForm() {
                     value={formData.lastInseminationDate}
                     onChange={handleChange}
                   />
+                </div>
+                <div className="space-y-2">
+                  {/* Empty div to maintain grid layout */}
                 </div>
               </div>
 

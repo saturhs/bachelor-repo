@@ -24,7 +24,6 @@ export async function GET() {
       lastHeatDay: animal.lastHeatDay,
       lastInseminationDate: animal.lastInseminationDate,
       reproductiveStatus: animal.reproductiveStatus || 'not bred',
-      lactationStatus: animal.lactationStatus || 'not applicable',
       notes: animal.notes,
       location: animal.location,
       tags: animal.tags || [],
@@ -117,7 +116,6 @@ export async function POST(request: NextRequest) {
       lastHeatDay: savedAnimal.lastHeatDay,
       lastInseminationDate: savedAnimal.lastInseminationDate,
       reproductiveStatus: savedAnimal.reproductiveStatus,
-      lactationStatus: savedAnimal.lactationStatus,
       notes: savedAnimal.notes,
       location: savedAnimal.location,
       tags: savedAnimal.tags || [],
@@ -165,6 +163,89 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting animal:", error);
     return NextResponse.json(
       { error: "Failed to delete animal" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    await connectToDatabase();
+    
+    const body = await request.json();
+    const { id, ...updateData } = body;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: "Animal ID is required" },
+        { status: 400 }
+      );
+    }
+    
+    // Validate BCS if provided
+    if (updateData.currentBCS !== undefined) {
+      if (updateData.currentBCS < 1 || updateData.currentBCS > 5 || isNaN(updateData.currentBCS)) {
+        return NextResponse.json(
+          { error: 'Body Condition Score must be between 1 and 5' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // Validate weight if provided
+    if (updateData.currentWeight !== undefined) {
+      if (updateData.currentWeight <= 0 || isNaN(updateData.currentWeight)) {
+        return NextResponse.json(
+          { error: 'Weight must be a positive number' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // Find and update the animal
+    const updatedAnimal = await Animal.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedAnimal) {
+      return NextResponse.json(
+        { error: "Animal not found" },
+        { status: 404 }
+      );
+    }
+    
+    // Transform MongoDB document to match our Animal interface
+    const transformedAnimal = {
+      id: updatedAnimal._id.toString(),
+      tag: updatedAnimal.tag,
+      gender: updatedAnimal.gender,
+      birthDate: updatedAnimal.birthDate,
+      breed: updatedAnimal.breed,
+      acquisitionDate: updatedAnimal.acquisitionDate,
+      acquisitionType: updatedAnimal.acquisitionType,
+      mothersTag: updatedAnimal.mothersTag,
+      fathersTag: updatedAnimal.fathersTag,
+      currentBCS: updatedAnimal.currentBCS,
+      currentWeight: updatedAnimal.currentWeight,
+      lastHealthCheckDate: updatedAnimal.lastHealthCheckDate,
+      lastHeatDay: updatedAnimal.lastHeatDay,
+      lastInseminationDate: updatedAnimal.lastInseminationDate,
+      reproductiveStatus: updatedAnimal.reproductiveStatus || 'not bred',
+      notes: updatedAnimal.notes,
+      location: updatedAnimal.location,
+      tags: updatedAnimal.tags || [],
+      category: updatedAnimal.category,
+      createdAt: updatedAnimal.createdAt,
+      updatedAt: updatedAnimal.updatedAt
+    };
+
+    return NextResponse.json(transformedAnimal);
+  } catch (error) {
+    console.error("Error updating animal:", error);
+    return NextResponse.json(
+      { error: "Failed to update animal" },
       { status: 500 }
     );
   }

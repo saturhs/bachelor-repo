@@ -1,12 +1,14 @@
-export type EventType = 'HealthCheck' | 'Insemination' | 'HeatObserved' | 'PregnancyCheck' | 'BCSExamination' | 'DryOff' | 'ExpectedCalving';
+export type EventType = string;
+
 export type EventStatus = 'Pending' | 'Completed' | 'Overdue' | 'Cancelled';
 export type EventPriority = 'High' | 'Medium' | 'Low';
-export type RepeatPattern = 'None' | 'Daily' | 'Weekly' | 'Monthly' | 'Custom';
-export type TimeUnit = 'minute' | 'hour' | 'day' | 'week';
 
-export interface ReminderTime {
-  value: number;
-  unit: TimeUnit;
+// Remove ReminderTime interface since it's no longer used
+
+export interface SemenDetails {
+  bullTag?: string;
+  serialNumber?: string;
+  producer?: string;
 }
 
 export interface Event {
@@ -18,9 +20,7 @@ export interface Event {
   scheduledDate: Date;
   status: EventStatus;
   priority: EventPriority;
-  repeatPattern: RepeatPattern;
-  repeatInterval?: number;
-  reminderTime?: ReminderTime;
+  // Removed repeatPattern, repeatInterval and reminderTime
   notificationSent: boolean;
   createdBy?: string;
   location?: string;
@@ -28,6 +28,7 @@ export interface Event {
   completedBy?: string;
   notes?: string;
   associatedEvents?: string[];
+  semenDetails?: SemenDetails;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/ui/Navbar";
 import { GoBack } from "@/components/ui/Goback";
+import { StatisticsContainer } from "@/components/ui/statistics/StatisticsContainer";
 
 export default function StatisticsPage() {
   return (
@@ -8,8 +9,8 @@ export default function StatisticsPage() {
       <GoBack />
       <div className="flex flex-col items-center justify-start pt-8">
         <h1 className="text-5xl font-bold mb-8">Statistics</h1>
-        <div className="w-[95%] md:w-[80%] lg:w-[60%] max-w-2xl mx-auto">
-          {/* Statistics content will go here */}
+        <div className="w-[95%] md:w-[80%] max-w-4xl mx-auto">
+          <StatisticsContainer />
         </div>
       </div>
     </main>

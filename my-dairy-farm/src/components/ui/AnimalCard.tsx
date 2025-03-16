@@ -1,6 +1,7 @@
 import { Animal } from "@/types/animal";
 import { format, differenceInYears, differenceInMonths, addDays } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { CustomEventType } from "@/types/customEventType";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AnimalCardProps {
   animal: Animal;
@@ -32,6 +37,29 @@ export function AnimalCard({ animal }: AnimalCardProps) {
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [isInseminationDialogOpen, setIsInseminationDialogOpen] = useState(false);
+  const [inseminationData, setInseminationData] = useState({
+    bullTag: "",
+    semenSerialNumber: "",
+    producer: "",
+    notes: ""
+  });
+  const [actionCompleted, setActionCompleted] = useState(false);
+  const [isCustomEventDialogOpen, setIsCustomEventDialogOpen] = useState(false);
+  const [customEventTypes, setCustomEventTypes] = useState<CustomEventType[]>([]);
+  const [loadingCustomEvents, setLoadingCustomEvents] = useState(false);
+  const [selectedCustomEvent, setSelectedCustomEvent] = useState<string | null>(null);
+  const [customEventNotes, setCustomEventNotes] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    currentBCS: animal.currentBCS || '',
+    currentWeight: animal.currentWeight || '',
+    notes: animal.notes || '',
+    location: animal.location || '',
+    tags: animal.tags ? animal.tags.join(', ') : '',
+  });
+  const [isEditLoading, setIsEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   
   // Calculate age from birthDate
   const calculateAge = (birthDate: Date) => {
@@ -54,6 +82,16 @@ export function AnimalCard({ animal }: AnimalCardProps) {
   const lastHealthCheck = animal.lastHealthCheckDate 
     ? format(new Date(animal.lastHealthCheckDate), 'dd/MM/yyyy') 
     : 'Never';
+
+  // Handle closing the details dialog - add page refresh when an action was completed
+  const handleCloseDetailsDialog = () => {
+    setIsDetailsOpen(false);
+    
+    // If an action was completed, refresh the page after dialog closes
+    if (actionCompleted) {
+      window.location.reload();
+    }
+  };
 
   // Delete animal handler
   const handleDelete = async () => {
@@ -86,6 +124,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
     setIsActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
+    setActionCompleted(false);
     
     try {
       const response = await fetch(`/api/animal-events`, {
@@ -106,11 +145,9 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       
       const data = await response.json();
       setActionSuccess('Health check recorded successfully. Next check scheduled.');
+      setActionCompleted(true); // Mark that an action was completed
       
-      // Refresh the animal data or update it locally
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Remove the auto-refresh setTimeout
     } catch (error: any) {
       console.error('Error recording health check:', error);
       setActionError(error.message || 'Failed to record health check');
@@ -123,6 +160,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
     setIsActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
+    setActionCompleted(false);
     
     try {
       const response = await fetch(`/api/animal-events`, {
@@ -143,11 +181,9 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       
       const data = await response.json();
       setActionSuccess('Heat symptoms recorded. Insemination has been scheduled.');
+      setActionCompleted(true); // Mark that an action was completed
       
-      // Refresh the animal data or update it locally
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Remove the auto-refresh setTimeout
     } catch (error: any) {
       console.error('Error recording heat symptoms:', error);
       setActionError(error.message || 'Failed to record heat symptoms');
@@ -156,10 +192,12 @@ export function AnimalCard({ animal }: AnimalCardProps) {
     }
   };
 
-  const handleInseminationDone = async () => {
+  const handleInseminationFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
+    setActionCompleted(false);
     
     try {
       const response = await fetch(`/api/animal-events`, {
@@ -170,6 +208,12 @@ export function AnimalCard({ animal }: AnimalCardProps) {
         body: JSON.stringify({
           animalId: animal.id,
           action: 'insemination',
+          semenDetails: {
+            bullTag: inseminationData.bullTag,
+            serialNumber: inseminationData.semenSerialNumber,
+            producer: inseminationData.producer
+          },
+          notes: inseminationData.notes
         }),
       });
       
@@ -180,11 +224,20 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       
       const data = await response.json();
       setActionSuccess('Insemination recorded. Pregnancy check has been scheduled.');
+      setActionCompleted(true); // Mark that an action was completed
       
-      // Refresh the animal data or update it locally
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Close the insemination dialog
+      setIsInseminationDialogOpen(false);
+      
+      // Reset the form
+      setInseminationData({
+        bullTag: "",
+        semenSerialNumber: "",
+        producer: "",
+        notes: ""
+      });
+      
+      // Remove the auto-refresh setTimeout
     } catch (error: any) {
       console.error('Error recording insemination:', error);
       setActionError(error.message || 'Failed to record insemination');
@@ -192,11 +245,20 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       setIsActionLoading(false);
     }
   };
+  
+  const handleInseminationInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setInseminationData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handlePregnancyConfirmed = async () => {
     setIsActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
+    setActionCompleted(false);
     
     try {
       const response = await fetch(`/api/animal-events`, {
@@ -217,11 +279,9 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       
       const data = await response.json();
       setActionSuccess('Pregnancy confirmed. Dry-off and expected calving have been scheduled.');
+      setActionCompleted(true); // Mark that an action was completed
       
-      // Refresh the animal data or update it locally
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Remove the auto-refresh setTimeout
     } catch (error: any) {
       console.error('Error confirming pregnancy:', error);
       setActionError(error.message || 'Failed to confirm pregnancy');
@@ -234,6 +294,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
     setIsActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
+    setActionCompleted(false);
     
     try {
       const response = await fetch(`/api/animal-events`, {
@@ -254,16 +315,227 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       
       const data = await response.json();
       setActionSuccess('Animal marked as not pregnant and status updated to open.');
+      setActionCompleted(true); // Mark that an action was completed
       
-      // Refresh the animal data or update it locally
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Remove the auto-refresh setTimeout
     } catch (error: any) {
       console.error('Error recording not pregnant status:', error);
       setActionError(error.message || 'Failed to record not pregnant status');
     } finally {
       setIsActionLoading(false);
+    }
+  };
+
+  // Add new action handlers for dry-off and calving
+  const handleDryOffCompleted = async () => {
+    setIsActionLoading(true);
+    setActionError(null);
+    setActionSuccess(null);
+    setActionCompleted(false);
+    
+    try {
+      const response = await fetch(`/api/animal-events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          animalId: animal.id,
+          action: 'dry-off-completed',
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to record dry-off');
+      }
+      
+      const data = await response.json();
+      setActionSuccess('Dry-off completed. Animal status updated to dry.');
+      setActionCompleted(true);
+    } catch (error: any) {
+      console.error('Error recording dry-off:', error);
+      setActionError(error.message || 'Failed to record dry-off');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleCalvingCompleted = async () => {
+    setIsActionLoading(true);
+    setActionError(null);
+    setActionSuccess(null);
+    setActionCompleted(false);
+    
+    try {
+      const response = await fetch(`/api/animal-events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          animalId: animal.id,
+          action: 'calving-completed',
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to record calving');
+      }
+      
+      const data = await response.json();
+      setActionSuccess('Calving completed. Animal status reset for new breeding cycle.');
+      setActionCompleted(true);
+    } catch (error: any) {
+      console.error('Error recording calving:', error);
+      setActionError(error.message || 'Failed to record calving');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Fetch custom event types that are applicable to this animal
+  useEffect(() => {
+    const fetchCustomEventTypes = async () => {
+      try {
+        setLoadingCustomEvents(true);
+        const res = await fetch('/api/custom-event-types');
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch custom event types');
+        }
+        
+        const data = await res.json();
+        
+        // Filter custom events based on animal category and gender
+        const animalCategory = animal.category === 'adult' 
+          ? `adult ${animal.gender}` 
+          : 'calf';
+        
+        const filteredEvents = data.filter((eventType: CustomEventType) => 
+          eventType.animalCategories.includes(animalCategory as any)
+        );
+        
+        setCustomEventTypes(filteredEvents);
+      } catch (error) {
+        console.error('Error fetching custom event types:', error);
+      } finally {
+        setLoadingCustomEvents(false);
+      }
+    };
+
+    if (isCustomEventDialogOpen) {
+      fetchCustomEventTypes();
+    }
+  }, [isCustomEventDialogOpen, animal.category, animal.gender]);
+
+  // Handle custom event submission
+  const handleCustomEventSubmit = async () => {
+    if (!selectedCustomEvent) return;
+    
+    setIsActionLoading(true);
+    setActionError(null);
+    setActionSuccess(null);
+    setActionCompleted(false);
+    
+    try {
+      // Find the selected event details
+      const eventType = customEventTypes.find(et => et.id === selectedCustomEvent);
+      if (!eventType) throw new Error('Selected event type not found');
+      
+      // Create the custom event via API
+      const response = await fetch('/api/custom-events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          animalId: animal.id,
+          customEventTypeId: selectedCustomEvent,
+          notes: customEventNotes
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to record custom event');
+      }
+      
+      // Reset form and show success message
+      setActionSuccess(`${eventType.name} recorded successfully`);
+      setActionCompleted(true);
+      setIsCustomEventDialogOpen(false);
+      setSelectedCustomEvent(null);
+      setCustomEventNotes("");
+      
+    } catch (error: any) {
+      console.error('Error recording custom event:', error);
+      setActionError(error.message || 'Failed to record custom event');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Handle edit form input changes
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle edit form submission
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsEditLoading(true);
+    setEditError(null);
+    
+    try {
+      // Convert form data to proper types
+      const formattedData = {
+        id: animal.id, // Include the animal ID in the request
+        currentBCS: editFormData.currentBCS ? parseFloat(editFormData.currentBCS as string) : undefined,
+        currentWeight: editFormData.currentWeight ? parseFloat(editFormData.currentWeight as string) : undefined,
+        notes: editFormData.notes,
+        location: editFormData.location,
+        tags: editFormData.tags ? editFormData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+      };
+      
+      // Validate BCS
+      if (formattedData.currentBCS !== undefined && 
+          (formattedData.currentBCS < 1 || formattedData.currentBCS > 5 || isNaN(formattedData.currentBCS))) {
+        throw new Error('Body Condition Score must be between 1 and 5');
+      }
+      
+      // Validate weight
+      if (formattedData.currentWeight !== undefined && 
+          (formattedData.currentWeight <= 0 || isNaN(formattedData.currentWeight))) {
+        throw new Error('Weight must be a positive number');
+      }
+
+      const response = await fetch(`/api/animals`, {
+        method: 'PATCH', // Use PATCH instead of PUT
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formattedData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update animal');
+      }
+      
+      // Close dialog and refresh page to show updated data
+      setIsEditDialogOpen(false);
+      window.location.reload();
+      
+    } catch (error: any) {
+      console.error('Error updating animal:', error);
+      setEditError(error.message || 'Failed to update animal. Please try again.');
+      setIsEditLoading(false);
     }
   };
 
@@ -277,6 +549,12 @@ export function AnimalCard({ animal }: AnimalCardProps) {
   
   const showPregnancyCheckButtons = animal.gender === 'female' && 
     animal.reproductiveStatus === 'bred';
+
+  const showDryOffButton = animal.gender === 'female' && 
+    animal.reproductiveStatus === 'confirmed pregnant';
+  
+  const showCalvingButton = animal.gender === 'female' && 
+    (animal.reproductiveStatus === 'confirmed pregnant' || animal.reproductiveStatus === 'dry');
 
   return (
     <>
@@ -306,6 +584,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             onClick={(e) => {
               e.stopPropagation(); // Prevent opening the details dialog
+              setIsEditDialogOpen(true);
             }}
           >
             Edit
@@ -323,7 +602,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
       </div>
       
       {/* Details dialog */}
-      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+      <Dialog open={isDetailsOpen} onOpenChange={handleCloseDetailsDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Animal Details: {animal.tag}</DialogTitle>
@@ -352,7 +631,6 @@ export function AnimalCard({ animal }: AnimalCardProps) {
               <div>
                 <h4 className="font-medium text-gray-500">Reproductive Information</h4>
                 <p><span className="font-medium">Reproductive Status:</span> {animal.reproductiveStatus}</p>
-                <p><span className="font-medium">Lactation Status:</span> {animal.lactationStatus}</p>
                 <p><span className="font-medium">Last Heat Day:</span> {animal.lastHeatDay ? format(new Date(animal.lastHeatDay), 'dd/MM/yyyy') : 'Not recorded'}</p>
                 <p><span className="font-medium">Last Insemination:</span> {animal.lastInseminationDate ? format(new Date(animal.lastInseminationDate), 'dd/MM/yyyy') : 'Not recorded'}</p>
               </div>
@@ -425,14 +703,14 @@ export function AnimalCard({ animal }: AnimalCardProps) {
               {showInseminationButton && (
                 <div>
                   <Button 
-                    onClick={handleInseminationDone}
+                    onClick={() => setIsInseminationDialogOpen(true)}
                     className="w-full bg-purple-600 hover:bg-purple-700"
                     disabled={isActionLoading}
                   >
                     {isActionLoading ? 'Processing...' : 'Insemination Done'}
                   </Button>
                   <p className="text-xs text-gray-500 mt-1">
-                    Record insemination and set a reminder for pregnancy check in 30 days
+                    Record insemination details and schedule pregnancy check
                   </p>
                 </div>
               )}
@@ -462,11 +740,217 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                   </p>
                 </div>
               )}
+
+              {/* Dry off button - only for confirmed pregnant females */}
+              {showDryOffButton && (
+                <div>
+                  <Button 
+                    onClick={handleDryOffCompleted}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                    disabled={isActionLoading}
+                  >
+                    {isActionLoading ? 'Processing...' : 'Dry Off Completed'}
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Mark animal as dried off (status will change to "dry")
+                  </p>
+                </div>
+              )}
+              
+              {/* Calving button - only for confirmed pregnant or dry females */}
+              {showCalvingButton && (
+                <div>
+                  <Button 
+                    onClick={handleCalvingCompleted}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    disabled={isActionLoading}
+                  >
+                    {isActionLoading ? 'Processing...' : 'Calving Completed'}
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Record calving and reset reproductive status
+                  </p>
+                </div>
+              )}
+
+              {/* New Custom Event Button - add this at the end of the actions section */}
+              <div>
+                <Button 
+                  onClick={() => setIsCustomEventDialogOpen(true)}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  disabled={isActionLoading}
+                >
+                  <span className="mr-1 text-lg">+</span> Record Custom Event
+                </Button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Record a custom event type for this animal
+                </p>
+              </div>
             </div>
           </div>
           
           <DialogFooter>
-            <Button onClick={() => setIsDetailsOpen(false)} variant="outline">Close</Button>
+            <Button onClick={handleCloseDetailsDialog} variant="outline">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Insemination Form Dialog */}
+      <Dialog open={isInseminationDialogOpen} onOpenChange={setIsInseminationDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Record Insemination Details</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleInseminationFormSubmit} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="bullTag">Bull Tag/ID</Label>
+              <Input
+                id="bullTag"
+                name="bullTag"
+                value={inseminationData.bullTag}
+                onChange={handleInseminationInputChange}
+                placeholder="Enter bull identification"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="semenSerialNumber">Semen Serial Number</Label>
+              <Input
+                id="semenSerialNumber"
+                name="semenSerialNumber"
+                value={inseminationData.semenSerialNumber}
+                onChange={handleInseminationInputChange}
+                placeholder="Enter serial number"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="producer">Producer/Company</Label>
+              <Input
+                id="producer"
+                name="producer"
+                value={inseminationData.producer}
+                onChange={handleInseminationInputChange}
+                placeholder="Enter producer name"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                name="notes"
+                value={inseminationData.notes}
+                onChange={handleInseminationInputChange}
+                placeholder="Additional notes about this insemination"
+              />
+            </div>
+            
+            {actionError && (
+              <div className="p-2 bg-red-100 text-red-800 rounded text-sm">
+                {actionError}
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsInseminationDialogOpen(false)}
+                disabled={isActionLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-purple-600 hover:bg-purple-700"
+                disabled={isActionLoading}
+              >
+                {isActionLoading ? 'Processing...' : 'Save Insemination Record'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Custom Event Dialog */}
+      <Dialog open={isCustomEventDialogOpen} onOpenChange={setIsCustomEventDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Record Custom Event</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            {loadingCustomEvents ? (
+              <div className="text-center py-4">Loading custom event types...</div>
+            ) : customEventTypes.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-600">No custom event types available for this animal.</p>
+                <p className="text-sm text-gray-600 mt-2">
+                  You can create custom event types in Settings.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>Select Event Type *</Label>
+                  <Select 
+                    value={selectedCustomEvent || ""} 
+                    onValueChange={setSelectedCustomEvent}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose event type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customEventTypes.map(eventType => (
+                        <SelectItem 
+                          key={eventType.id} 
+                          value={eventType.id}
+                        >
+                          {eventType.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="eventNotes">Notes</Label>
+                  <Textarea
+                    id="eventNotes"
+                    value={customEventNotes}
+                    onChange={(e) => setCustomEventNotes(e.target.value)}
+                    placeholder="Add any additional details about this event"
+                    rows={3}
+                  />
+                </div>
+                
+                {actionError && (
+                  <div className="p-2 bg-red-100 text-red-800 rounded text-sm">
+                    {actionError}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsCustomEventDialogOpen(false)}
+              disabled={isActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCustomEventSubmit}
+              className="bg-purple-600 hover:bg-purple-700"
+              disabled={isActionLoading || !selectedCustomEvent || loadingCustomEvents || customEventTypes.length === 0}
+            >
+              {isActionLoading ? "Processing..." : "Record Event"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -497,6 +981,107 @@ export function AnimalCard({ animal }: AnimalCardProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Animal Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Animal: {animal.tag}</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleEditSubmit} className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentBCS">Body Condition Score (1-5)</Label>
+                <Input
+                  id="currentBCS"
+                  name="currentBCS"
+                  value={editFormData.currentBCS}
+                  onChange={handleEditInputChange}
+                  placeholder="1.0 - 5.0"
+                  type="number"
+                  min="1"
+                  max="5"
+                  step="0.1"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="currentWeight">Weight (kg)</Label>
+                <Input
+                  id="currentWeight"
+                  name="currentWeight"
+                  value={editFormData.currentWeight}
+                  onChange={handleEditInputChange}
+                  placeholder="Enter weight in kg"
+                  type="number"
+                  min="1"
+                  step="1"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                name="location"
+                value={editFormData.location}
+                onChange={handleEditInputChange}
+                placeholder="e.g., Barn A, Pasture 2"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="tags">Tags (comma separated)</Label>
+              <Input
+                id="tags"
+                name="tags"
+                value={editFormData.tags}
+                onChange={handleEditInputChange}
+                placeholder="e.g., first-lactation, purchased, premium"
+              />
+              <p className="text-xs text-gray-500">Separate multiple tags with commas</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                value={editFormData.notes}
+                onChange={handleEditInputChange}
+                placeholder="Additional information about this animal"
+                rows={3}
+              />
+            </div>
+            
+            {editError && (
+              <div className="p-2 bg-red-100 text-red-800 rounded text-sm">
+                {editError}
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isEditLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isEditLoading}
+              >
+                {isEditLoading ? 'Updating...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -13,12 +13,21 @@ export async function GET(request: NextRequest) {
     const animalId = searchParams.get("animalId");
     const status = searchParams.get("status");
     const eventType = searchParams.get("eventType");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
     
     // Build query object
     const query: Record<string, any> = {};
     if (animalId) query.animalId = animalId;
     if (status) query.status = status;
     if (eventType) query.eventType = eventType;
+    
+    // Add date range filtering if provided
+    if (startDate || endDate) {
+      query.scheduledDate = {};
+      if (startDate) query.scheduledDate.$gte = new Date(startDate);
+      if (endDate) query.scheduledDate.$lt = new Date(endDate);
+    }
     
     const events = await Event.find(query).sort({ scheduledDate: 1 });
     
@@ -32,9 +41,6 @@ export async function GET(request: NextRequest) {
       scheduledDate: event.scheduledDate || new Date(),
       status: event.status || 'Pending',
       priority: event.priority || 'Medium',
-      repeatPattern: event.repeatPattern || 'None',
-      repeatInterval: event.repeatInterval,
-      reminderTime: event.reminderTime,
       notificationSent: event.notificationSent || false,
       createdBy: event.createdBy ? event.createdBy.toString() : '',
       location: event.location || '',
