@@ -49,16 +49,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       setPressed(true);
-      // Call the original onClick handler if it exists
+      
       onClick?.(e);
     };
 
-    // Reset the pressed state when isLoading becomes false or after a delay
+    
     React.useEffect(() => {
       if (!isLoading && pressed) {
         const timer = setTimeout(() => {
           setPressed(false);
-        }, 300); // Maintain pressed visual state for a short time after loading completes
+        }, 300); 
         return () => clearTimeout(timer);
       }
     }, [isLoading, pressed]);

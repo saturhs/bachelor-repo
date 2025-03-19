@@ -67,7 +67,7 @@ export function PregnancyDistributionChart() {
   };
   
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }: any) => {
-    if (percent < 0.05) return null; // Don't show labels for small slices
+    if (percent < 0.05) return null; 
     
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;

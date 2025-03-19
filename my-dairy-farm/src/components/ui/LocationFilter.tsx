@@ -21,7 +21,6 @@ interface LocationFilterProps {
 export function LocationFilter({ animals, onChange, selectedLocation }: LocationFilterProps) {
   const [locations, setLocations] = useState<string[]>([]);
   
-  // Special value for "All Locations"
   const ALL_LOCATIONS = "all";
 
   // Extract unique locations from animals data

@@ -262,7 +262,6 @@ export function CalendarView() {
         <div className="text-center py-8">Loading calendar...</div>
       ) : (
         <>
-          {/* Calendar grid - days of week header */}
           <div className="grid grid-cols-7 mb-2 text-center font-semibold">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
               <div key={day} className="py-2">
@@ -270,8 +269,6 @@ export function CalendarView() {
               </div>
             ))}
           </div>
-
-          {/* Calendar grid - days */}
           <div className="grid grid-cols-7 gap-1">
             {daysInMonth.map((day) => {
               const eventCount = getEventCountForDay(day);
@@ -309,8 +306,6 @@ export function CalendarView() {
           </div>
         </>
       )}
-
-      {/* Modified Day details dialog */}
       {selectedDay && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
@@ -333,7 +328,6 @@ export function CalendarView() {
               </DialogTitle>
             </DialogHeader>
             <div className="py-4 max-h-[60vh] overflow-y-auto">
-              {/* Location selection view */}
               {!selectedLocation && (
                 <>
                   {selectedDayLocations.length === 0 ? (

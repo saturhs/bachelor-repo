@@ -3,8 +3,6 @@ export type EventType = string;
 export type EventStatus = 'Pending' | 'Completed' | 'Overdue' | 'Cancelled';
 export type EventPriority = 'High' | 'Medium' | 'Low';
 
-// Remove ReminderTime interface since it's no longer used
-
 export interface SemenDetails {
   bullTag?: string;
   serialNumber?: string;
@@ -20,7 +18,6 @@ export interface Event {
   scheduledDate: Date;
   status: EventStatus;
   priority: EventPriority;
-  // Removed repeatPattern, repeatInterval and reminderTime
   notificationSent: boolean;
   createdBy?: string;
   location?: string;

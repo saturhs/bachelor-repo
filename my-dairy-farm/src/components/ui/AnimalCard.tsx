@@ -583,7 +583,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
           <button 
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             onClick={(e) => {
-              e.stopPropagation(); // Prevent opening the details dialog
+              e.stopPropagation(); // Zapobiega otwarciu okna szczegółowych informacji
               setIsEditDialogOpen(true);
             }}
           >
@@ -592,7 +592,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
           <button 
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             onClick={(e) => {
-              e.stopPropagation(); // Prevent opening the details dialog
+              e.stopPropagation(); // Zapobiega otwarciu okna szczegółowych informacji
               setIsDeleteDialogOpen(true);
             }}
           >
@@ -601,7 +601,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
         </div>
       </div>
       
-      {/* Details dialog */}
+      {/* Okno z informacjami szczegółowymi */}
       <Dialog open={isDetailsOpen} onOpenChange={handleCloseDetailsDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -651,11 +651,11 @@ export function AnimalCard({ animal }: AnimalCardProps) {
             </div>
           )}
           
-          {/* Animal actions section */}
+          {/* Sekcja akcji powiązanych ze zwierzęciem */}
           <div className="border-t pt-4">
             <h4 className="font-medium text-gray-500 mb-3">Actions</h4>
             
-            {/* Action feedback messages */}
+            {/* Sekcja informacji zwrotnej po wprowadzeniu zmian */}
             {actionSuccess && (
               <div className="mb-3 p-2 bg-green-100 text-green-800 rounded text-sm">
                 {actionSuccess}
@@ -669,7 +669,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
             )}
             
             <div className="space-y-3">
-              {/* Health check button - always visible */}
+              {/* Health check button - zawsze widoczny */}
               <div>
                 <Button 
                   onClick={handleHealthCheckDone}
@@ -683,7 +683,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                 </p>
               </div>
               
-              {/* Heat symptoms button - only for females that aren't bred or pregnant */}
+              {/* Heat symptoms button - tylko dla niezapłodnionych i nieciężarnych samic */}
               {showHeatButton && (
                 <div>
                   <Button 
@@ -699,7 +699,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                 </div>
               )}
               
-              {/* Insemination button - only for females in heat */}
+              {/* Insemination button - tylko dla samic z objawami rui */}
               {showInseminationButton && (
                 <div>
                   <Button 
@@ -715,7 +715,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                 </div>
               )}
               
-              {/* Pregnancy check buttons - only for females that have been inseminated */}
+              {/* Pregnancy check buttons - tylko dla zainseminowanych samic */}
               {showPregnancyCheckButtons && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Pregnancy Check Result:</p>
@@ -741,7 +741,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                 </div>
               )}
 
-              {/* Dry off button - only for confirmed pregnant females */}
+              {/* Dry off button - tylko dla ciężarnych samic */}
               {showDryOffButton && (
                 <div>
                   <Button 
@@ -757,7 +757,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                 </div>
               )}
               
-              {/* Calving button - only for confirmed pregnant or dry females */}
+              {/* Calving button - tylko dla ciężarnych i zasuszonych samic */}
               {showCalvingButton && (
                 <div>
                   <Button 
@@ -773,7 +773,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
                 </div>
               )}
 
-              {/* New Custom Event Button - add this at the end of the actions section */}
+              {/* New Custom Event Button - pozwalający na dodanie niestandardowych wydarzeń */}
               <div>
                 <Button 
                   onClick={() => setIsCustomEventDialogOpen(true)}
@@ -795,7 +795,7 @@ export function AnimalCard({ animal }: AnimalCardProps) {
         </DialogContent>
       </Dialog>
       
-      {/* Insemination Form Dialog */}
+      {/* Formularz szczegółowych informacji o nasieniu wykorzystanym do inseminacji */}
       <Dialog open={isInseminationDialogOpen} onOpenChange={setIsInseminationDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
